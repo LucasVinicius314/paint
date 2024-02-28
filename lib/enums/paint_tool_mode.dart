@@ -1,0 +1,4 @@
+enum PaintToolMode {
+  brush,
+  pointer,
+}
