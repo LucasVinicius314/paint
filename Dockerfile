@@ -16,7 +16,7 @@ WORKDIR /usr/local/flutter
 
 RUN flutter channel master
 
-RUN git checkout 3.2.3
+RUN flutter upgrade
 
 RUN flutter config --enable-web
 
