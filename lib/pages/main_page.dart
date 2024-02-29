@@ -35,6 +35,7 @@ class _MainPageState extends State<MainPage> {
   }) {
     _paintController.setLine(
       endCoordinates: endCoordinates,
+      lineDrawingMode: _paintConfig.lineDrawingMode,
       pixel: Pixel(r: 0, g: 0, b: 0),
       startCoordinates: startCoordinates,
     );
@@ -117,7 +118,7 @@ class _MainPageState extends State<MainPage> {
         const Divider(height: 1),
         Container(
           color: Theme.of(context).scaffoldBackgroundColor,
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(8),
           child: Text(
             '${(_paintConfig.canvasScale * 100).toStringAsFixed(0)}%',
           ),
@@ -204,7 +205,7 @@ class _MainPageState extends State<MainPage> {
   void _incrementScale(int value) {
     setState(() {
       _paintConfig.canvasScale =
-          Utils.clamp(_paintConfig.canvasScale + value, 1, 16).toInt();
+          Utils.clamp(_paintConfig.canvasScale + value, 1, 48).toInt();
     });
   }
 

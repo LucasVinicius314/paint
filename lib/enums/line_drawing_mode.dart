@@ -1,0 +1,4 @@
+enum LineDrawingMode {
+  bresenham,
+  dda,
+}
