@@ -46,6 +46,15 @@ class PaintToolbar extends StatelessWidget {
             tooltip: 'Brush (B)',
           ),
           const SizedBox(height: 8),
+          IconButton(
+            color: paintToolMode == PaintToolMode.line ? primaryColor : null,
+            icon: Icon(MdiIcons.vectorLine),
+            onPressed: () {
+              onPaintToolModeSelected(PaintToolMode.line);
+            },
+            tooltip: 'Line (L)',
+          ),
+          const SizedBox(height: 8),
           const Divider(height: 1),
           const SizedBox(height: 8),
           IconButton(
