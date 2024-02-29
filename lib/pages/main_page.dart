@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:paint/controllers/paint_controller.dart';
+import 'package:paint/enums/line_drawing_mode.dart';
 import 'package:paint/enums/paint_tool_mode.dart';
 import 'package:paint/enums/stroke_mode.dart';
 import 'package:paint/model/paint_config.dart';
@@ -30,23 +31,72 @@ class _MainPageState extends State<MainPage> {
   (int, int)? _lastStrokeCoordinates;
 
   void _drawLine({
+    required Color color,
     required (int, int) endCoordinates,
     required (int, int) startCoordinates,
   }) {
     _paintController.setLine(
       endCoordinates: endCoordinates,
       lineDrawingMode: _paintConfig.lineDrawingMode,
-      pixel: Pixel(r: 0, g: 0, b: 0),
+      pixel: Pixel.fromColor(color),
       startCoordinates: startCoordinates,
     );
   }
 
   void _drawPixel({
+    required Color color,
     required (int, int) coordinates,
   }) {
     _paintController.setPixel(
       coordinates: coordinates,
-      pixel: Pixel(r: 0, g: 0, b: 0),
+      pixel: Pixel.fromColor(color),
+    );
+  }
+
+  Widget _getBrushToolToolbar() {
+    return _getColorPicker(
+      width: Constants.colorPickerSwatchSpacing * 4 +
+          Constants.colorPickerSwatchSize * 5,
+    );
+  }
+
+  Widget _getColorPicker({
+    required double width,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: SizedBox(
+        width: width,
+        child: Wrap(
+          spacing: Constants.colorPickerSwatchSpacing,
+          runSpacing: Constants.colorPickerSwatchSpacing,
+          children: Constants.defaultColors.map((e) {
+            return SizedBox.fromSize(
+              size: const Size.square(Constants.colorPickerSwatchSize),
+              child: Material(
+                clipBehavior: Clip.antiAlias,
+                color: e,
+                shape: RoundedRectangleBorder(
+                  borderRadius: const BorderRadius.all(Radius.circular(6)),
+                  side: BorderSide(
+                    color: _paintConfig.paintToolColor == e
+                        ? Theme.of(context).primaryColor
+                        : Theme.of(context).dividerColor.withOpacity(.2),
+                    width: _paintConfig.paintToolColor == e ? 3 : 1,
+                  ),
+                ),
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      _paintConfig.paintToolColor = e;
+                    });
+                  },
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 
@@ -118,33 +168,109 @@ class _MainPageState extends State<MainPage> {
         const Divider(height: 1),
         Container(
           color: Theme.of(context).scaffoldBackgroundColor,
-          padding: const EdgeInsets.all(8),
-          child: Text(
-            '${(_paintConfig.canvasScale * 100).toStringAsFixed(0)}%',
+          child: IntrinsicHeight(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(8),
+              scrollDirection: Axis.horizontal,
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      '${(_paintConfig.canvasScale * 100).toStringAsFixed(0)}%',
+                    ),
+                    const VerticalDivider(width: 16),
+                    Text(
+                      '${_paintConfig.canvasDimensions.$1.toStringAsFixed(0)} x ${_paintConfig.canvasDimensions.$2.toStringAsFixed(0)} px',
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ],
     );
   }
 
+  Widget _getLineToolToolbar() {
+    return Material(
+      color: Colors.transparent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ...[
+            (LineDrawingMode.bresenham, 'Bresenham'),
+            (LineDrawingMode.dda, 'DDA'),
+          ].map((e) {
+            return RadioListTile(
+              value: e.$1,
+              groupValue: _paintConfig.lineDrawingMode,
+              title: Text(e.$2),
+              onChanged: (value) {
+                setState(() {
+                  _paintConfig.lineDrawingMode = e.$1;
+                });
+              },
+            );
+          }),
+          const Divider(height: 1),
+          _getColorPicker(
+            width: Constants.colorPickerSwatchSpacing * 4 +
+                Constants.colorPickerSwatchSize * 5,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _getRightPanel() {
-    return IntrinsicWidth(
-      child: PaintToolbar(
-        onCleared: () {
-          _setCanvas(dimensions: 100);
-        },
-        onPaintToolModeSelected: (paintToolMode) {
-          setState(() {
-            _paintConfig.paintToolMode = paintToolMode;
-          });
-        },
-        onZoomedIn: () {
-          _incrementScale(1);
-        },
-        onZoomedOut: () {
-          _incrementScale(-1);
-        },
-        paintToolMode: _paintConfig.paintToolMode,
+    Widget? toolToolbar;
+
+    switch (_paintConfig.paintToolMode) {
+      case PaintToolMode.brush:
+        toolToolbar = _getBrushToolToolbar();
+        break;
+      case PaintToolMode.line:
+        toolToolbar = _getLineToolToolbar();
+        break;
+      default:
+    }
+
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AnimatedSize(
+            duration: const Duration(milliseconds: 100),
+            child: Container(
+              child: toolToolbar == null
+                  ? null
+                  : IntrinsicWidth(child: toolToolbar),
+            ),
+          ),
+          if (toolToolbar != null) const VerticalDivider(width: 1),
+          IntrinsicWidth(
+            child: PaintToolbar(
+              onCleared: () {
+                _setCanvas(dimensions: 100);
+              },
+              onPaintToolModeSelected: (paintToolMode) {
+                setState(() {
+                  _paintConfig.paintToolMode = paintToolMode;
+                });
+              },
+              onZoomedIn: () {
+                _incrementScale(1);
+              },
+              onZoomedOut: () {
+                _incrementScale(-1);
+              },
+              paintToolMode: _paintConfig.paintToolMode,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -168,7 +294,7 @@ class _MainPageState extends State<MainPage> {
     switch (_paintConfig.paintToolMode) {
       case PaintToolMode.brush:
         if ([StrokeMode.start, StrokeMode.update].contains(strokeMode)) {
-          _drawPixel(coordinates: (x, y));
+          _drawPixel(coordinates: (x, y), color: _paintConfig.paintToolColor);
         }
 
         break;
@@ -180,6 +306,7 @@ class _MainPageState extends State<MainPage> {
             }
 
             _drawLine(
+              color: _paintConfig.paintToolColor,
               endCoordinates: (x, y),
               startCoordinates: (
                 ((_strokeStartCoordinates!.$1 - 8) / _paintConfig.canvasScale)
@@ -222,7 +349,7 @@ class _MainPageState extends State<MainPage> {
           dimensions,
           (index) => List.generate(
             dimensions,
-            (index) => Pixel(r: 255, g: 255, b: 255),
+            (index) => Pixel.fromColor(Colors.white),
           ),
         ),
       ),

@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class Pixel {
   Pixel({
     required this.r,
@@ -8,4 +10,8 @@ class Pixel {
   int r;
   int g;
   int b;
+
+  factory Pixel.fromColor(Color color) {
+    return Pixel(r: color.red, g: color.green, b: color.blue);
+  }
 }

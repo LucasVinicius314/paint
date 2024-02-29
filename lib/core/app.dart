@@ -9,6 +9,11 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        listTileTheme: const ListTileThemeData(
+          contentPadding: EdgeInsets.only(left: 8, right: 16),
+        ),
+      ),
       routes: {
         MainPage.route: (context) => const MainPage(),
       },

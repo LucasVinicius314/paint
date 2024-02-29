@@ -8,66 +8,53 @@ class BresenhamLineDrawer implements BaseLineDrawer {
   }) {
     final out = <(int, int)>[];
 
-    var dx = (end.$1 - start.$1).abs();
-    var dy = (end.$2 - start.$2).abs();
+    var x0 = start.$1;
+    var y0 = start.$2;
 
-    var xStep = 0;
-    var yStep = 0;
+    var x1 = end.$1;
+    var y1 = end.$2;
 
-    if (dx >= 0) {
-      xStep = 1;
-    } else {
-      xStep = -1;
-      dx *= -1;
+    final steep = (y1 - y0).abs() > (x1 - x0).abs();
+
+    if (steep) {
+      var temp = x0;
+      x0 = y0;
+      y0 = temp;
+
+      temp = x1;
+      x1 = y1;
+      y1 = temp;
     }
 
-    if (dy >= 0) {
-      yStep = 1;
-    } else {
-      xStep = -1;
-      dy *= -1;
+    if (x0 > x1) {
+      var temp = x0;
+      x0 = x1;
+      x1 = temp;
+
+      temp = y0;
+      y0 = y1;
+      y1 = temp;
     }
 
-    var x = start.$1;
-    var y = start.$2;
+    final dx = x1 - x0;
+    final dy = (y1 - y0).abs();
 
-    out.add((x, y));
+    final ystep = (y0 < y1) ? 1 : -1;
 
-    if (dy < dx) {
-      var p = 2 * dy - dx;
+    var error = dx ~/ 2;
 
-      final a = 2 * dy;
-      final b = 2 * (dy - dx);
-
-      for (var i = 0; i < dx; i++) {
-        x += xStep;
-
-        if (p < 0) {
-          p += a;
-        } else {
-          p += b;
-          y += yStep;
-        }
-
+    for (var x = x0, y = y0; x <= x1; x++) {
+      if (steep) {
+        out.add((y, x));
+      } else {
         out.add((x, y));
       }
-    } else {
-      var p = 2 * dx - dy;
 
-      final a = 2 * dx;
-      final b = 2 * (dx - dy);
+      error -= dy;
 
-      for (var i = 0; i < dy; i++) {
-        y += yStep;
-
-        if (p < 0) {
-          p += a;
-        } else {
-          p += b;
-          x += xStep;
-        }
-
-        out.add((x, y));
+      if (error < 0) {
+        y += ystep;
+        error += dx;
       }
     }
 

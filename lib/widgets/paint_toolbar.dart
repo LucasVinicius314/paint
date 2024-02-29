@@ -22,8 +22,7 @@ class PaintToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).primaryColor;
 
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
+    return Padding(
       padding: const EdgeInsets.all(8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
