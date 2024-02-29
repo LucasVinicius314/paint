@@ -1,18 +1,22 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:paint/model/paint_data.dart';
+import 'package:paint/controllers/paint_controller.dart';
 
 class MainPainter extends CustomPainter {
   const MainPainter({
-    required this.paintData,
-  });
+    required this.controller,
+  }) : super(repaint: controller);
 
-  final PaintData paintData;
+  final PaintController controller;
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (final (x, column) in paintData.pixels.indexed) {
+    if (controller.paintData == null) {
+      return;
+    }
+
+    for (final (x, column) in controller.paintData!.pixels.indexed) {
       for (final (y, pixel) in column.indexed) {
         canvas.drawPoints(
           PointMode.points,

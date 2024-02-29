@@ -8,8 +8,8 @@ import 'package:paint/model/paint_data.dart';
 import 'package:paint/model/pixel.dart';
 import 'package:paint/utils/constants.dart';
 import 'package:paint/utils/utils.dart';
+import 'package:paint/widgets/main_painter.dart';
 import 'package:paint/widgets/paint_toolbar.dart';
-import 'package:paint/widgets/paint_view.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -69,7 +69,9 @@ class _MainPageState extends State<MainPage> {
                   child: SizedBox(
                     height: _paintConfig.canvasDimensions.$2.toDouble(),
                     width: _paintConfig.canvasDimensions.$1.toDouble(),
-                    child: PaintView(controller: _paintController),
+                    child: CustomPaint(
+                      painter: MainPainter(controller: _paintController),
+                    ),
                   ),
                 ),
               ),
