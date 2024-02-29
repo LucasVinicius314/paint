@@ -65,37 +65,47 @@ class _MainPageState extends State<MainPage> {
   }) {
     return Padding(
       padding: const EdgeInsets.all(8),
-      child: SizedBox(
-        width: width,
-        child: Wrap(
-          spacing: Constants.colorPickerSwatchSpacing,
-          runSpacing: Constants.colorPickerSwatchSpacing,
-          children: Constants.defaultColors.map((e) {
-            return SizedBox.fromSize(
-              size: const Size.square(Constants.colorPickerSwatchSize),
-              child: Material(
-                clipBehavior: Clip.antiAlias,
-                color: e,
-                shape: RoundedRectangleBorder(
-                  borderRadius: const BorderRadius.all(Radius.circular(6)),
-                  side: BorderSide(
-                    color: _paintConfig.paintToolColor == e
-                        ? Theme.of(context).primaryColor
-                        : Theme.of(context).dividerColor.withOpacity(.2),
-                    width: _paintConfig.paintToolColor == e ? 3 : 1,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Color picker',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          Container(
+            padding: const EdgeInsets.only(top: 8),
+            width: width,
+            child: Wrap(
+              spacing: Constants.colorPickerSwatchSpacing,
+              runSpacing: Constants.colorPickerSwatchSpacing,
+              children: Constants.defaultColors.map((e) {
+                return SizedBox.fromSize(
+                  size: const Size.square(Constants.colorPickerSwatchSize),
+                  child: Material(
+                    clipBehavior: Clip.antiAlias,
+                    color: e,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: const BorderRadius.all(Radius.circular(6)),
+                      side: BorderSide(
+                        color: _paintConfig.paintToolColor == e
+                            ? Theme.of(context).primaryColor
+                            : Theme.of(context).dividerColor.withOpacity(.2),
+                        width: _paintConfig.paintToolColor == e ? 3 : 1,
+                      ),
+                    ),
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _paintConfig.paintToolColor = e;
+                        });
+                      },
+                    ),
                   ),
-                ),
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      _paintConfig.paintToolColor = e;
-                    });
-                  },
-                ),
-              ),
-            );
-          }).toList(),
-        ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -199,14 +209,24 @@ class _MainPageState extends State<MainPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Text(
+              'Line mode',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
           ...[
             (LineDrawingMode.bresenham, 'Bresenham'),
             (LineDrawingMode.dda, 'DDA'),
           ].map((e) {
             return RadioListTile(
-              value: e.$1,
+              contentPadding: const EdgeInsets.only(left: 0, right: 8),
+              dense: true,
               groupValue: _paintConfig.lineDrawingMode,
+              splashRadius: 8,
               title: Text(e.$2),
+              value: e.$1,
               onChanged: (value) {
                 setState(() {
                   _paintConfig.lineDrawingMode = e.$1;
