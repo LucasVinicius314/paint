@@ -1,12 +1,15 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:paint/controllers/paint_controller.dart';
 import 'package:paint/enums/paint_tool_mode.dart';
+import 'package:paint/model/paint_config.dart';
+import 'package:paint/model/paint_data.dart';
 import 'package:paint/model/pixel.dart';
 import 'package:paint/utils/constants.dart';
 import 'package:paint/utils/utils.dart';
-import 'package:paint/widgets/main_painter.dart';
 import 'package:paint/widgets/paint_toolbar.dart';
+import 'package:paint/widgets/paint_view.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -18,19 +21,17 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  var _canvasDimensions = (0, 0);
-  var _canvasScale = 1;
+  final _paintConfig = PaintConfig();
 
-  var _paintToolMode = PaintToolMode.pointer;
+  final _paintController = PaintController();
 
-  List<List<Pixel>> _pixels = [];
-
-  void _draw({
-    required (int, int) position,
+  void _drawPixel({
+    required (int, int) coordinates,
   }) {
-    setState(() {
-      _pixels[position.$1][position.$2] = Pixel(r: 0, g: 0, b: 0);
-    });
+    _paintController.setPixel(
+      coordinates: coordinates,
+      pixel: Pixel(r: 0, g: 0, b: 0),
+    );
   }
 
   Widget _getLeftPanel() {
@@ -41,58 +42,34 @@ class _MainPageState extends State<MainPage> {
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,
             onTapDown: (details) {
-              if (_paintToolMode != PaintToolMode.brush) {
-                return;
-              }
-
-              final x = ((details.localPosition.dx - 8) / _canvasScale).round();
-              final y =
-                  (((details.localPosition.dy - 8) / _canvasScale)).round();
-
-              if (x < 0 ||
-                  y < 0 ||
-                  x >= _canvasDimensions.$1 ||
-                  y >= _canvasDimensions.$2) {
-                return;
-              }
-
-              _draw(position: (x, y));
+              _handleTapEvent(
+                dx: details.localPosition.dx,
+                dy: details.localPosition.dy,
+              );
             },
             onPanUpdate: (details) {
-              if (_paintToolMode != PaintToolMode.brush) {
-                return;
-              }
-
-              final x = ((details.localPosition.dx - 8) / _canvasScale).round();
-              final y =
-                  (((details.localPosition.dy - 8) / _canvasScale)).round();
-
-              if (x < 0 ||
-                  y < 0 ||
-                  x >= _canvasDimensions.$1 ||
-                  y >= _canvasDimensions.$2) {
-                return;
-              }
-
-              _draw(position: (x, y));
+              _handleTapEvent(
+                dx: details.localPosition.dx,
+                dy: details.localPosition.dy,
+              );
             },
             child: MouseRegion(
               opaque: false,
               cursor: {
                     PaintToolMode.brush: SystemMouseCursors.precise,
-                  }[_paintToolMode] ??
+                  }[_paintConfig.paintToolMode] ??
                   MouseCursor.defer,
-              child: Container(
-                alignment: Alignment.topLeft,
-                margin: const EdgeInsets.all(8),
+              child: Padding(
+                padding: const EdgeInsets.all(8),
                 child: Transform.scale(
                   alignment: Alignment.topLeft,
-                  scale: _canvasScale.toDouble(),
+                  origin: const Offset(-.5, -.5),
+                  scale: _paintConfig.canvasScale.toDouble(),
                   transformHitTests: false,
                   child: SizedBox(
-                    height: _canvasDimensions.$2.toDouble(),
-                    width: _canvasDimensions.$1.toDouble(),
-                    child: CustomPaint(painter: MainPainter(pixels: _pixels)),
+                    height: _paintConfig.canvasDimensions.$2.toDouble(),
+                    width: _paintConfig.canvasDimensions.$1.toDouble(),
+                    child: PaintView(controller: _paintController),
                   ),
                 ),
               ),
@@ -103,7 +80,8 @@ class _MainPageState extends State<MainPage> {
         Container(
           color: Theme.of(context).scaffoldBackgroundColor,
           padding: const EdgeInsets.all(8.0),
-          child: Text('${(_canvasScale * 100).toStringAsFixed(0)}%'),
+          child:
+              Text('${(_paintConfig.canvasScale * 100).toStringAsFixed(0)}%'),
         ),
       ],
     );
@@ -117,7 +95,7 @@ class _MainPageState extends State<MainPage> {
         },
         onPaintToolModeSelected: (paintToolMode) {
           setState(() {
-            _paintToolMode = paintToolMode;
+            _paintConfig.paintToolMode = paintToolMode;
           });
         },
         onZoomedIn: () {
@@ -126,14 +104,36 @@ class _MainPageState extends State<MainPage> {
         onZoomedOut: () {
           _incrementScale(-1);
         },
-        paintToolMode: _paintToolMode,
+        paintToolMode: _paintConfig.paintToolMode,
       ),
     );
   }
 
+  void _handleTapEvent({
+    required double dx,
+    required double dy,
+  }) {
+    if (_paintConfig.paintToolMode != PaintToolMode.brush) {
+      return;
+    }
+
+    final x = ((dx - 8) / _paintConfig.canvasScale).round();
+    final y = (((dy - 8) / _paintConfig.canvasScale)).round();
+
+    if (x < 0 ||
+        y < 0 ||
+        x >= _paintConfig.canvasDimensions.$1 ||
+        y >= _paintConfig.canvasDimensions.$2) {
+      return;
+    }
+
+    _drawPixel(coordinates: (x, y));
+  }
+
   void _incrementScale(int value) {
     setState(() {
-      _canvasScale = Utils.clamp(_canvasScale + value, 1, 16).toInt();
+      _paintConfig.canvasScale =
+          Utils.clamp(_paintConfig.canvasScale + value, 1, 16).toInt();
     });
   }
 
@@ -141,16 +141,20 @@ class _MainPageState extends State<MainPage> {
     required int dimensions,
   }) {
     setState(() {
-      _canvasDimensions = (dimensions, dimensions);
-
-      _pixels = List.generate(
-        dimensions,
-        (index) => List.generate(
-          dimensions,
-          (index) => Pixel(r: 255, g: 255, b: 255),
-        ),
-      );
+      _paintConfig.canvasDimensions = (dimensions, dimensions);
     });
+
+    _paintController.setPaintData(
+      PaintData(
+        pixels: List.generate(
+          dimensions,
+          (index) => List.generate(
+            dimensions,
+            (index) => Pixel(r: 255, g: 255, b: 255),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -168,12 +172,12 @@ class _MainPageState extends State<MainPage> {
         bindings: <ShortcutActivator, VoidCallback>{
           const SingleActivator(LogicalKeyboardKey.keyB): () {
             setState(() {
-              _paintToolMode = PaintToolMode.brush;
+              _paintConfig.paintToolMode = PaintToolMode.brush;
             });
           },
           const SingleActivator(LogicalKeyboardKey.quoteSingle): () {
             setState(() {
-              _paintToolMode = PaintToolMode.pointer;
+              _paintConfig.paintToolMode = PaintToolMode.pointer;
             });
           },
           const SingleActivator(LogicalKeyboardKey.minus, control: true): () {
