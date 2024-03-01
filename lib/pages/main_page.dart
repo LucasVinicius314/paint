@@ -376,6 +376,12 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
+  void _setScale(int value) {
+    setState(() {
+      _paintConfig.canvasScale = Utils.clamp(value, 1, 48).toInt();
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -409,6 +415,9 @@ class _MainPageState extends State<MainPage> {
           },
           const SingleActivator(LogicalKeyboardKey.equal, control: true): () {
             _incrementScale(1);
+          },
+          const SingleActivator(LogicalKeyboardKey.digit0, control: true): () {
+            _setScale(1);
           },
           const SingleActivator(LogicalKeyboardKey.delete, control: true): () {
             _setCanvas(dimensions: 100);
