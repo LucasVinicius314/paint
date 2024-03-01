@@ -9,5 +9,8 @@ class PaintConfig {
   var paintToolColor = Colors.black;
   var paintToolMode = PaintToolMode.pointer;
 
-  var lineDrawingMode = LineDrawingMode.bresenham;
+  var rasterLineDrawingMode = LineDrawingMode.bresenham;
+
+  // TODO: fix, use vector line drawing mode on vector rasterization
+  var vectorLineDrawingMode = LineDrawingMode.bresenham;
 }

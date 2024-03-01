@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 class Constants {
   static const appName = 'Paint';
 
+  static const canvasPadding = 8.0;
+
   static const colorPickerSwatchSize = 24.0;
   static const colorPickerSwatchSpacing = 8.0;
 

@@ -2,16 +2,21 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:paint/controllers/paint_controller.dart';
-import 'package:paint/enums/line_drawing_mode.dart';
 import 'package:paint/enums/paint_tool_mode.dart';
 import 'package:paint/enums/stroke_mode.dart';
 import 'package:paint/model/paint_config.dart';
 import 'package:paint/model/paint_data.dart';
 import 'package:paint/model/pixel.dart';
+import 'package:paint/model/vector.dart';
+import 'package:paint/model/vector_node.dart';
+import 'package:paint/painters/main_painter.dart';
+import 'package:paint/painters/vector_painter.dart';
 import 'package:paint/utils/constants.dart';
 import 'package:paint/utils/utils.dart';
-import 'package:paint/widgets/main_painter.dart';
+import 'package:paint/widgets/color_picker.dart';
+import 'package:paint/widgets/line_drawing_mode_picker.dart';
 import 'package:paint/widgets/paint_toolbar.dart';
+import 'package:paint/widgets/settings_dialog.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -37,7 +42,7 @@ class _MainPageState extends State<MainPage> {
   }) {
     _paintController.setLine(
       endCoordinates: endCoordinates,
-      lineDrawingMode: _paintConfig.lineDrawingMode,
+      lineDrawingMode: _paintConfig.rasterLineDrawingMode,
       pixel: Pixel.fromColor(color),
       startCoordinates: startCoordinates,
     );
@@ -54,59 +59,19 @@ class _MainPageState extends State<MainPage> {
   }
 
   Widget _getBrushToolToolbar() {
-    return _getColorPicker(
-      width: Constants.colorPickerSwatchSpacing * 4 +
-          Constants.colorPickerSwatchSize * 5,
-    );
+    return _getColorPicker();
   }
 
-  Widget _getColorPicker({
-    required double width,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Color picker',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          Container(
-            padding: const EdgeInsets.only(top: 8),
-            width: width,
-            child: Wrap(
-              spacing: Constants.colorPickerSwatchSpacing,
-              runSpacing: Constants.colorPickerSwatchSpacing,
-              children: Constants.defaultColors.map((e) {
-                return SizedBox.fromSize(
-                  size: const Size.square(Constants.colorPickerSwatchSize),
-                  child: Material(
-                    clipBehavior: Clip.antiAlias,
-                    color: e,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: const BorderRadius.all(Radius.circular(6)),
-                      side: BorderSide(
-                        color: _paintConfig.paintToolColor == e
-                            ? Theme.of(context).primaryColor
-                            : Theme.of(context).dividerColor.withOpacity(.2),
-                        width: _paintConfig.paintToolColor == e ? 3 : 1,
-                      ),
-                    ),
-                    child: InkWell(
-                      onTap: () {
-                        setState(() {
-                          _paintConfig.paintToolColor = e;
-                        });
-                      },
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-        ],
-      ),
+  Widget _getColorPicker() {
+    return ColorPicker(
+      onColorPicked: (color) {
+        setState(() {
+          _paintConfig.paintToolColor = color;
+        });
+      },
+      paintConfig: _paintConfig,
+      width: Constants.colorPickerSwatchSpacing * 4 +
+          Constants.colorPickerSwatchSize * 5,
     );
   }
 
@@ -157,19 +122,30 @@ class _MainPageState extends State<MainPage> {
                   }[_paintConfig.paintToolMode] ??
                   MouseCursor.defer,
               child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Transform.scale(
-                  alignment: Alignment.topLeft,
-                  origin: const Offset(-.5, -.5),
-                  scale: _paintConfig.canvasScale.toDouble(),
-                  transformHitTests: false,
-                  child: SizedBox(
-                    height: _paintConfig.canvasDimensions.$2.toDouble(),
-                    width: _paintConfig.canvasDimensions.$1.toDouble(),
-                    child: CustomPaint(
-                      painter: MainPainter(controller: _paintController),
+                padding: const EdgeInsets.all(Constants.canvasPadding),
+                child: Stack(
+                  children: [
+                    Transform.scale(
+                      alignment: Alignment.topLeft,
+                      origin: const Offset(-.5, -.5),
+                      scale: _paintConfig.canvasScale.toDouble(),
+                      transformHitTests: false,
+                      child: SizedBox(
+                        height: _paintConfig.canvasDimensions.$2.toDouble(),
+                        width: _paintConfig.canvasDimensions.$1.toDouble(),
+                        child: CustomPaint(
+                          painter: MainPainter(controller: _paintController),
+                        ),
+                      ),
                     ),
-                  ),
+                    CustomPaint(
+                      painter: VectorPainter(
+                        controller: _paintController,
+                        paddingOffset: Constants.canvasPadding,
+                        scale: _paintConfig.canvasScale.toDouble(),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -216,29 +192,17 @@ class _MainPageState extends State<MainPage> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
-          ...[
-            (LineDrawingMode.bresenham, 'Bresenham'),
-            (LineDrawingMode.dda, 'DDA'),
-          ].map((e) {
-            return RadioListTile(
-              contentPadding: const EdgeInsets.only(left: 0, right: 8),
-              dense: true,
-              groupValue: _paintConfig.lineDrawingMode,
-              splashRadius: 8,
-              title: Text(e.$2),
-              value: e.$1,
-              onChanged: (value) {
-                setState(() {
-                  _paintConfig.lineDrawingMode = e.$1;
-                });
-              },
-            );
-          }),
-          const Divider(height: 1),
-          _getColorPicker(
-            width: Constants.colorPickerSwatchSpacing * 4 +
-                Constants.colorPickerSwatchSize * 5,
+          LineDrawingModePicker(
+            contentPadding: const EdgeInsets.only(right: 8),
+            groupValue: _paintConfig.rasterLineDrawingMode,
+            onChanged: (lineDrawingMode) {
+              setState(() {
+                _paintConfig.rasterLineDrawingMode = lineDrawingMode;
+              });
+            },
           ),
+          const Divider(height: 1),
+          _getColorPicker(),
         ],
       ),
     );
@@ -345,6 +309,8 @@ class _MainPageState extends State<MainPage> {
 
           default:
         }
+      case PaintToolMode.vectorLine:
+      // TODO: fix, vector line behavior
       default:
     }
   }
@@ -372,6 +338,16 @@ class _MainPageState extends State<MainPage> {
             (index) => Pixel.fromColor(Colors.white),
           ),
         ),
+        // TODO: fix, remove test vector
+        vectors: [
+          Vector(
+            color: Colors.purple,
+            nodes: [
+              VectorNode(coordinates: (10, 20)),
+              VectorNode(coordinates: (40, 50)),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -392,7 +368,33 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text(Constants.appName)),
+      appBar: AppBar(
+        title: const Text(Constants.appName),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: IconButton(
+              tooltip: 'Settings',
+              onPressed: () async {
+                await showDialog(
+                  context: context,
+                  builder: (context) {
+                    return SettingsDialog(
+                      paintConfig: _paintConfig,
+                      onVectorLineDrawingModeChanged: (lineDrawingMode) {
+                        setState(() {
+                          _paintConfig.vectorLineDrawingMode = lineDrawingMode;
+                        });
+                      },
+                    );
+                  },
+                );
+              },
+              icon: const Icon(Icons.settings),
+            ),
+          ),
+        ],
+      ),
       body: CallbackShortcuts(
         bindings: <ShortcutActivator, VoidCallback>{
           const SingleActivator(LogicalKeyboardKey.keyB): () {
