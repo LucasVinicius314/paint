@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:paint/controllers/paint_controller.dart';
+import 'package:paint/utils/constants.dart';
 
 class VectorPainter extends CustomPainter {
   const VectorPainter({
@@ -23,15 +24,15 @@ class VectorPainter extends CustomPainter {
     final edgePaint = Paint()
       ..color = Colors.blue
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = 2;
+      ..strokeWidth = Constants.vectorEdgeWidth;
 
     for (var vector in controller.paintData!.vectors) {
       canvas.drawPoints(
         PointMode.lines,
         vector.nodes.map((e) {
           return Offset(
-            e.coordinates.$1.toDouble() * scale + paddingOffset,
-            e.coordinates.$2.toDouble() * scale + paddingOffset,
+            e.coordinates.$1.toDouble() * scale,
+            e.coordinates.$2.toDouble() * scale,
           );
         }).toList(),
         edgePaint,
@@ -41,11 +42,11 @@ class VectorPainter extends CustomPainter {
         canvas.drawRect(
           Rect.fromCenter(
             center: Offset(
-              node.coordinates.$1.toDouble() * scale + paddingOffset,
-              node.coordinates.$2.toDouble() * scale + paddingOffset,
+              node.coordinates.$1.toDouble() * scale,
+              node.coordinates.$2.toDouble() * scale,
             ),
-            width: 6,
-            height: 6,
+            width: Constants.vectorNodeSize,
+            height: Constants.vectorNodeSize,
           ),
           Paint()
             ..color = Colors.blue.shade700

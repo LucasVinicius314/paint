@@ -32,8 +32,8 @@ class _MainPageState extends State<MainPage> {
 
   final _paintController = PaintController();
 
-  (int, int)? _strokeStartCoordinates;
-  (int, int)? _lastStrokeCoordinates;
+  (double, double)? _strokeStartCoordinates;
+  (double, double)? _lastStrokeCoordinates;
 
   void _drawLine({
     required Color color,
@@ -55,6 +55,18 @@ class _MainPageState extends State<MainPage> {
     _paintController.setPixel(
       coordinates: coordinates,
       pixel: Pixel.fromColor(color),
+    );
+  }
+
+  void _drawVector({
+    required Color color,
+    required List<(double, double)> coordinates,
+  }) {
+    _paintController.addVector(
+      vector: Vector(
+        color: color,
+        nodes: coordinates.map((e) => VectorNode.fromTuple(e)).toList(),
+      ),
     );
   }
 
@@ -134,7 +146,10 @@ class _MainPageState extends State<MainPage> {
                         height: _paintConfig.canvasDimensions.$2.toDouble(),
                         width: _paintConfig.canvasDimensions.$1.toDouble(),
                         child: CustomPaint(
-                          painter: MainPainter(controller: _paintController),
+                          painter: MainPainter(
+                            controller: _paintController,
+                            paintConfig: _paintConfig,
+                          ),
                         ),
                       ),
                     ),
@@ -218,6 +233,9 @@ class _MainPageState extends State<MainPage> {
       case PaintToolMode.line:
         toolToolbar = _getLineToolToolbar();
         break;
+      case PaintToolMode.vectorLine:
+        toolToolbar = _getVectorLineToolToolbar();
+        break;
       default:
     }
 
@@ -259,13 +277,17 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
+  Widget _getVectorLineToolToolbar() {
+    return _getColorPicker();
+  }
+
   void _handleTapEvent({
     required double dx,
     required double dy,
     required StrokeMode strokeMode,
   }) {
-    final x = ((dx - 8) / _paintConfig.canvasScale).floor();
-    final y = ((dy - 8) / _paintConfig.canvasScale).floor();
+    final x = ((dx - 8) / _paintConfig.canvasScale);
+    final y = ((dy - 8) / _paintConfig.canvasScale);
 
     if (x < 0 ||
         y < 0 ||
@@ -278,7 +300,10 @@ class _MainPageState extends State<MainPage> {
     switch (_paintConfig.paintToolMode) {
       case PaintToolMode.brush:
         if ([StrokeMode.start, StrokeMode.update].contains(strokeMode)) {
-          _drawPixel(coordinates: (x, y), color: _paintConfig.paintToolColor);
+          _drawPixel(
+            coordinates: (x.floor(), y.floor()),
+            color: _paintConfig.paintToolColor,
+          );
         }
 
         break;
@@ -291,26 +316,61 @@ class _MainPageState extends State<MainPage> {
 
             _drawLine(
               color: _paintConfig.paintToolColor,
-              endCoordinates: (x, y),
+              endCoordinates: (x.floor(), y.floor()),
               startCoordinates: (
-                ((_strokeStartCoordinates!.$1 - 8) / _paintConfig.canvasScale)
+                ((_strokeStartCoordinates!.$1.floor() - 8) /
+                        _paintConfig.canvasScale)
                     .floor(),
-                ((_strokeStartCoordinates!.$2 - 8) / _paintConfig.canvasScale)
+                ((_strokeStartCoordinates!.$2.floor() - 8) /
+                        _paintConfig.canvasScale)
                     .floor(),
               ),
             );
 
             _strokeStartCoordinates = null;
+            break;
           case StrokeMode.start:
-            _strokeStartCoordinates = (dx.round(), dy.round());
-
+            _strokeStartCoordinates = (dx, dy);
+            break;
           case StrokeMode.update:
-            _lastStrokeCoordinates = (dx.round(), dy.round());
-
+            _lastStrokeCoordinates = (dx, dy);
+            break;
           default:
         }
+
+        break;
       case PaintToolMode.vectorLine:
-      // TODO: fix, vector line behavior
+        switch (strokeMode) {
+          case StrokeMode.end:
+            if (_strokeStartCoordinates == null) {
+              return;
+            }
+
+            _drawVector(
+              color: _paintConfig.paintToolColor,
+              coordinates: [
+                (
+                  ((_strokeStartCoordinates!.$1 - 8) /
+                      _paintConfig.canvasScale),
+                  ((_strokeStartCoordinates!.$2 - 8) /
+                      _paintConfig.canvasScale),
+                ),
+                (x, y),
+              ],
+            );
+
+            _strokeStartCoordinates = null;
+            break;
+          case StrokeMode.start:
+            _strokeStartCoordinates = (dx, dy);
+            break;
+          case StrokeMode.update:
+            _lastStrokeCoordinates = (dx, dy);
+            break;
+          default:
+        }
+
+        break;
       default:
     }
   }
@@ -338,16 +398,7 @@ class _MainPageState extends State<MainPage> {
             (index) => Pixel.fromColor(Colors.white),
           ),
         ),
-        // TODO: fix, remove test vector
-        vectors: [
-          Vector(
-            color: Colors.purple,
-            nodes: [
-              VectorNode(coordinates: (10, 20)),
-              VectorNode(coordinates: (40, 50)),
-            ],
-          ),
-        ],
+        vectors: [],
       ),
     );
   }
@@ -397,30 +448,37 @@ class _MainPageState extends State<MainPage> {
       ),
       body: CallbackShortcuts(
         bindings: <ShortcutActivator, VoidCallback>{
-          const SingleActivator(LogicalKeyboardKey.keyB): () {
-            setState(() {
-              _paintConfig.paintToolMode = PaintToolMode.brush;
-            });
-          },
-          const SingleActivator(LogicalKeyboardKey.keyL): () {
-            setState(() {
-              _paintConfig.paintToolMode = PaintToolMode.line;
-            });
-          },
+          // '
           const SingleActivator(LogicalKeyboardKey.quoteSingle): () {
             setState(() {
               _paintConfig.paintToolMode = PaintToolMode.pointer;
             });
           },
-          const SingleActivator(LogicalKeyboardKey.minus, control: true): () {
-            _incrementScale(-1);
+          // B
+          const SingleActivator(LogicalKeyboardKey.keyB): () {
+            setState(() {
+              _paintConfig.paintToolMode = PaintToolMode.brush;
+            });
           },
+          // L
+          const SingleActivator(LogicalKeyboardKey.keyL): () {
+            setState(() {
+              _paintConfig.paintToolMode = PaintToolMode.line;
+            });
+          },
+          // Ctrl + +
           const SingleActivator(LogicalKeyboardKey.equal, control: true): () {
             _incrementScale(1);
           },
+          // Ctrl + -
+          const SingleActivator(LogicalKeyboardKey.minus, control: true): () {
+            _incrementScale(-1);
+          },
+          // Ctrl + 0
           const SingleActivator(LogicalKeyboardKey.digit0, control: true): () {
             _setScale(1);
           },
+          // Ctrl + Delete
           const SingleActivator(LogicalKeyboardKey.delete, control: true): () {
             _setCanvas(dimensions: 100);
           },

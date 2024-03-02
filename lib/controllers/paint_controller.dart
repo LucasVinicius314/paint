@@ -5,12 +5,25 @@ import 'package:paint/drawers/line/dda_line_drawer.dart';
 import 'package:paint/enums/line_drawing_mode.dart';
 import 'package:paint/model/paint_data.dart';
 import 'package:paint/model/pixel.dart';
+import 'package:paint/model/vector.dart';
 
 class PaintController extends ChangeNotifier {
   PaintData? paintData;
 
   void setPaintData(PaintData newpaintData) {
     paintData = newpaintData;
+
+    notifyListeners();
+  }
+
+  void addVector({
+    required Vector vector,
+  }) {
+    if (paintData == null) {
+      return;
+    }
+
+    paintData!.vectors.add(vector);
 
     notifyListeners();
   }

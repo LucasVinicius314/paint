@@ -3,5 +3,9 @@ class VectorNode {
     required this.coordinates,
   });
 
-  (int, int) coordinates;
+  (double, double) coordinates;
+
+  factory VectorNode.fromTuple((double, double) coordinates) {
+    return VectorNode(coordinates: coordinates);
+  }
 }

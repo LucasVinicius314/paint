@@ -11,6 +11,5 @@ class PaintConfig {
 
   var rasterLineDrawingMode = LineDrawingMode.bresenham;
 
-  // TODO: fix, use vector line drawing mode on vector rasterization
   var vectorLineDrawingMode = LineDrawingMode.bresenham;
 }

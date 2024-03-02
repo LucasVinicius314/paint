@@ -10,7 +10,9 @@ class Constants {
 
   static final defaultColors = [
     Colors.black,
+    Colors.grey.shade700,
     Colors.grey,
+    Colors.grey.shade300,
     Colors.white,
     Colors.red.shade300,
     Colors.red,
@@ -37,4 +39,7 @@ class Constants {
     Colors.pink,
     Colors.pink.shade700,
   ];
+
+  static const vectorEdgeWidth = 2.0;
+  static const vectorNodeSize = 6.0;
 }
