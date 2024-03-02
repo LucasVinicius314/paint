@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:paint/controllers/paint_controller.dart';
 import 'package:paint/controllers/selection_controller.dart';
+import 'package:paint/enums/vector_polygon_mode.dart';
 import 'package:paint/model/vector_node.dart';
 import 'package:paint/utils/constants.dart';
 import 'package:paint/utils/utils.dart';
@@ -32,7 +33,11 @@ class VectorPainter extends CustomPainter {
     for (var vector in paintController.paintData!.vectors) {
       VectorNode? lastNode;
 
-      for (var node in vector.nodes) {
+      for (var node in [
+        ...vector.nodes,
+        if (vector.vectorPolygonMode == VectorPolygonMode.closed)
+          vector.nodes.first,
+      ]) {
         if (lastNode != null) {
           canvas.drawLine(
             Offset(

@@ -8,7 +8,6 @@ import 'package:paint/controllers/paint_controller.dart';
 import 'package:paint/controllers/selection_controller.dart';
 import 'package:paint/enums/paint_tool_mode.dart';
 import 'package:paint/enums/stroke_mode.dart';
-import 'package:paint/enums/vector_polygon_mode.dart';
 import 'package:paint/model/paint_config.dart';
 import 'package:paint/model/paint_data.dart';
 import 'package:paint/model/pixel.dart';
@@ -701,12 +700,6 @@ class _MainPageState extends State<MainPage> {
     }
 
     // TODO: remove vector from vectors if theres only one node
-
-    if (_currentVector!.vectorPolygonMode == VectorPolygonMode.closed) {
-      _currentVector!.nodes.add(
-        VectorNode.fromTuple(_currentVector!.nodes.first.coordinates),
-      );
-    }
 
     setState(() {
       _currentVector = null;

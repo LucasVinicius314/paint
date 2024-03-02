@@ -6,6 +6,7 @@ import 'package:paint/drawers/line/base_line_drawer.dart';
 import 'package:paint/drawers/line/bresenham_line_drawer.dart';
 import 'package:paint/drawers/line/dda_line_drawer.dart';
 import 'package:paint/enums/line_drawing_mode.dart';
+import 'package:paint/enums/vector_polygon_mode.dart';
 import 'package:paint/model/paint_config.dart';
 import 'package:paint/model/pixel.dart';
 import 'package:paint/model/vector_node.dart';
@@ -61,7 +62,11 @@ class MainPainter extends CustomPainter {
     for (var vector in paintData.vectors) {
       VectorNode? lastNode;
 
-      for (var node in vector.nodes) {
+      for (var node in [
+        ...vector.nodes,
+        if (vector.vectorPolygonMode == VectorPolygonMode.closed)
+          vector.nodes.first,
+      ]) {
         if (lastNode != null) {
           for (var coordinate in lineDrawer.draw(
             end: (node.coordinates.$1.floor(), node.coordinates.$2.floor()),
