@@ -1,6 +1,6 @@
 import 'package:paint/drawers/circle/base_circle_drawer.dart';
 
-class BresenhamCircleDrawer extends BaseCircleDrawer {
+class BresenhamCircleDrawer implements BaseCircleDrawer {
   @override
   List<(int, int)> draw({
     required (int, int) center,
@@ -13,7 +13,7 @@ class BresenhamCircleDrawer extends BaseCircleDrawer {
 
     var p = 3 - 2 * radius;
 
-    out.addAll(plot(center: center, x: x, y: y));
+    out.addAll(_plot(center: center, x: x, y: y));
 
     while (x < y) {
       if (p < 0) {
@@ -25,13 +25,13 @@ class BresenhamCircleDrawer extends BaseCircleDrawer {
 
       x++;
 
-      out.addAll(plot(center: center, x: x, y: y));
+      out.addAll(_plot(center: center, x: x, y: y));
     }
 
     return out;
   }
 
-  List<(int, int)> plot({
+  List<(int, int)> _plot({
     required (int, int) center,
     required int x,
     required int y,

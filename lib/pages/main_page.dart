@@ -465,7 +465,7 @@ class _MainPageState extends State<MainPage> {
 
         break;
       case PaintToolMode.circle:
-        // TODO: fix, vector layer to represent radius
+        // TODO: vector layer to represent radius
         switch (strokeMode) {
           case StrokeMode.end:
             if (_strokeStartCoordinates == null) {
@@ -652,7 +652,7 @@ class _MainPageState extends State<MainPage> {
           default:
         }
 
-        // TODO: fix, delete vector nodes and vector
+        // TODO: delete vector nodes and vector
 
         break;
       case PaintToolMode.vectorPolygon:

@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:paint/clippers/cohen_sutherland_clipper.dart';
 import 'package:paint/controllers/paint_controller.dart';
 import 'package:paint/drawers/line/base_line_drawer.dart';
 import 'package:paint/drawers/line/bresenham_line_drawer.dart';
@@ -59,6 +60,9 @@ class MainPainter extends CustomPainter {
         throw 'Invalid LineDrawingMode [$paintConfig.vectorLineDrawingMode]';
     }
 
+    // TODO: multiple clipping algorithms
+    final clipper = CohenSutherlandClipper();
+
     for (var vector in paintData.vectors) {
       VectorNode? lastNode;
 
@@ -68,23 +72,40 @@ class MainPainter extends CustomPainter {
           vector.nodes.first,
       ]) {
         if (lastNode != null) {
-          for (var coordinate in lineDrawer.draw(
-            end: (node.coordinates.$1.floor(), node.coordinates.$2.floor()),
-            start: (
-              lastNode.coordinates.$1.floor(),
-              lastNode.coordinates.$2.floor(),
-            ),
-          )) {
-            if (Utils.isPointInsideRect(
-              end: (
-                paintConfig.canvasDimensions.$1.toDouble() - 1,
-                paintConfig.canvasDimensions.$2.toDouble() - 1,
-              ),
-              point: (coordinate.$1.toDouble(), coordinate.$2.toDouble()),
-              start: (0, 0),
+          final end = (
+            node.coordinates.$1.floor(),
+            node.coordinates.$2.floor(),
+          );
+
+          final start = (
+            lastNode.coordinates.$1.floor(),
+            lastNode.coordinates.$2.floor(),
+          );
+
+          // TODO: optional clipping
+          final clippedLine = clipper.clip(
+            end: end,
+            max: (75, 75),
+            min: (25, 25),
+            start: start,
+          );
+
+          if (clippedLine != null) {
+            for (var coordinate in lineDrawer.draw(
+              end: clippedLine.$2,
+              start: clippedLine.$1,
             )) {
-              tempLayer[coordinate.$1][coordinate.$2] =
-                  Pixel.fromColor(vector.color);
+              if (Utils.isPointInsideRect(
+                end: (
+                  paintConfig.canvasDimensions.$1.toDouble() - 1,
+                  paintConfig.canvasDimensions.$2.toDouble() - 1,
+                ),
+                point: (coordinate.$1.toDouble(), coordinate.$2.toDouble()),
+                start: (0, 0),
+              )) {
+                tempLayer[coordinate.$1][coordinate.$2] =
+                    Pixel.fromColor(vector.color);
+              }
             }
           }
         }
