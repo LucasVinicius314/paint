@@ -1,0 +1,4 @@
+enum VectorPolygonMode {
+  closed,
+  open,
+}

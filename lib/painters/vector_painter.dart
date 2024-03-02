@@ -1,7 +1,6 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:paint/controllers/paint_controller.dart';
+import 'package:paint/model/vector_node.dart';
 import 'package:paint/utils/constants.dart';
 
 class VectorPainter extends CustomPainter {
@@ -27,16 +26,25 @@ class VectorPainter extends CustomPainter {
       ..strokeWidth = Constants.vectorEdgeWidth;
 
     for (var vector in controller.paintData!.vectors) {
-      canvas.drawPoints(
-        PointMode.lines,
-        vector.nodes.map((e) {
-          return Offset(
-            e.coordinates.$1.toDouble() * scale,
-            e.coordinates.$2.toDouble() * scale,
+      VectorNode? lastNode;
+
+      for (var node in vector.nodes) {
+        if (lastNode != null) {
+          canvas.drawLine(
+            Offset(
+              lastNode.coordinates.$1.toDouble() * scale,
+              lastNode.coordinates.$2.toDouble() * scale,
+            ),
+            Offset(
+              node.coordinates.$1.toDouble() * scale,
+              node.coordinates.$2.toDouble() * scale,
+            ),
+            edgePaint,
           );
-        }).toList(),
-        edgePaint,
-      );
+        }
+
+        lastNode = node;
+      }
 
       for (var node in vector.nodes) {
         canvas.drawRect(

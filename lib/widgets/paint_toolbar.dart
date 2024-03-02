@@ -22,81 +22,95 @@ class PaintToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).primaryColor;
 
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          IconButton(
-            color: paintToolMode == PaintToolMode.pointer ? primaryColor : null,
-            icon: Icon(MdiIcons.cursorDefault),
-            onPressed: () {
-              onPaintToolModeSelected(PaintToolMode.pointer);
-            },
-            tooltip: 'None (\')',
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              'Raster',
-              style: Theme.of(context).textTheme.bodySmall,
+    return IntrinsicWidth(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            IconButton(
+              color:
+                  paintToolMode == PaintToolMode.pointer ? primaryColor : null,
+              icon: Icon(MdiIcons.cursorDefault),
+              onPressed: () {
+                onPaintToolModeSelected(PaintToolMode.pointer);
+              },
+              tooltip: 'None (\')',
             ),
-          ),
-          IconButton(
-            color: paintToolMode == PaintToolMode.brush ? primaryColor : null,
-            icon: Icon(MdiIcons.brush),
-            onPressed: () {
-              onPaintToolModeSelected(PaintToolMode.brush);
-            },
-            tooltip: 'Brush (B)',
-          ),
-          const SizedBox(height: 8),
-          IconButton(
-            color: paintToolMode == PaintToolMode.line ? primaryColor : null,
-            icon: Icon(MdiIcons.gesture),
-            onPressed: () {
-              onPaintToolModeSelected(PaintToolMode.line);
-            },
-            tooltip: 'Line (L)',
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              'Vector',
-              style: Theme.of(context).textTheme.bodySmall,
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Raster',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ),
-          ),
-          IconButton(
-            color:
-                paintToolMode == PaintToolMode.vectorLine ? primaryColor : null,
-            icon: Icon(MdiIcons.vectorLine),
-            onPressed: () {
-              onPaintToolModeSelected(PaintToolMode.vectorLine);
-            },
-            tooltip: 'Vector line (Shift + L)',
-          ),
-          // TODO: fix, keybinds, other vector tools
-          const SizedBox(height: 8),
-          const Divider(height: 1),
-          const SizedBox(height: 8),
-          IconButton(
-            icon: Icon(MdiIcons.magnifyPlus),
-            onPressed: onZoomedIn,
-            tooltip: 'Zoom in (Ctrl + \'+\')',
-          ),
-          const SizedBox(height: 8),
-          IconButton(
-            icon: Icon(MdiIcons.magnifyMinus),
-            onPressed: onZoomedOut,
-            tooltip: 'Zoom out (Ctrl + \'-\')',
-          ),
-          const SizedBox(height: 8),
-          IconButton(
-            icon: Icon(MdiIcons.close),
-            onPressed: onCleared,
-            tooltip: 'Clear canvas (Ctrl + Delete)',
-          ),
-        ],
+            IconButton(
+              color: paintToolMode == PaintToolMode.brush ? primaryColor : null,
+              icon: Icon(MdiIcons.brush),
+              onPressed: () {
+                onPaintToolModeSelected(PaintToolMode.brush);
+              },
+              tooltip: 'Brush (B)',
+            ),
+            const SizedBox(height: 8),
+            IconButton(
+              color: paintToolMode == PaintToolMode.line ? primaryColor : null,
+              icon: Icon(MdiIcons.gesture),
+              onPressed: () {
+                onPaintToolModeSelected(PaintToolMode.line);
+              },
+              tooltip: 'Line (L)',
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Vector',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+            IconButton(
+              color: paintToolMode == PaintToolMode.vectorLine
+                  ? primaryColor
+                  : null,
+              icon: Icon(MdiIcons.vectorLine),
+              onPressed: () {
+                onPaintToolModeSelected(PaintToolMode.vectorLine);
+              },
+              tooltip: 'Vector line (Ctrl + L)',
+            ),
+            const SizedBox(height: 8),
+            IconButton(
+              color: paintToolMode == PaintToolMode.vectorPolygon
+                  ? primaryColor
+                  : null,
+              icon: Icon(MdiIcons.vectorPolygon),
+              onPressed: () {
+                onPaintToolModeSelected(PaintToolMode.vectorPolygon);
+              },
+              tooltip: 'Vector polygon (Ctrl + P)',
+            ),
+            const SizedBox(height: 8),
+            const Divider(height: 1),
+            const SizedBox(height: 8),
+            IconButton(
+              icon: Icon(MdiIcons.magnifyPlus),
+              onPressed: onZoomedIn,
+              tooltip: 'Zoom in (Ctrl + \'+\')',
+            ),
+            const SizedBox(height: 8),
+            IconButton(
+              icon: Icon(MdiIcons.magnifyMinus),
+              onPressed: onZoomedOut,
+              tooltip: 'Zoom out (Ctrl + \'-\')',
+            ),
+            const SizedBox(height: 8),
+            IconButton(
+              icon: Icon(MdiIcons.close),
+              onPressed: onCleared,
+              tooltip: 'Clear canvas (Ctrl + Delete)',
+            ),
+          ],
+        ),
       ),
     );
   }

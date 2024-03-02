@@ -28,6 +28,10 @@ class PaintController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void notify() {
+    notifyListeners();
+  }
+
   void setLine({
     required (int, int) endCoordinates,
     required LineDrawingMode lineDrawingMode,

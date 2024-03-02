@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:paint/controllers/paint_controller.dart';
 import 'package:paint/enums/paint_tool_mode.dart';
 import 'package:paint/enums/stroke_mode.dart';
+import 'package:paint/enums/vector_polygon_mode.dart';
 import 'package:paint/model/paint_config.dart';
 import 'package:paint/model/paint_data.dart';
 import 'package:paint/model/pixel.dart';
@@ -17,6 +18,7 @@ import 'package:paint/widgets/color_picker.dart';
 import 'package:paint/widgets/line_drawing_mode_picker.dart';
 import 'package:paint/widgets/paint_toolbar.dart';
 import 'package:paint/widgets/settings_dialog.dart';
+import 'package:paint/widgets/vector_polygon_mode_picker.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -34,6 +36,14 @@ class _MainPageState extends State<MainPage> {
 
   (double, double)? _strokeStartCoordinates;
   (double, double)? _lastStrokeCoordinates;
+
+  Vector? _currentVector;
+
+  void _addVector({
+    required Vector vector,
+  }) {
+    _paintController.addVector(vector: vector);
+  }
 
   void _drawLine({
     required Color color,
@@ -55,18 +65,6 @@ class _MainPageState extends State<MainPage> {
     _paintController.setPixel(
       coordinates: coordinates,
       pixel: Pixel.fromColor(color),
-    );
-  }
-
-  void _drawVector({
-    required Color color,
-    required List<(double, double)> coordinates,
-  }) {
-    _paintController.addVector(
-      vector: Vector(
-        color: color,
-        nodes: coordinates.map((e) => VectorNode.fromTuple(e)).toList(),
-      ),
     );
   }
 
@@ -236,6 +234,9 @@ class _MainPageState extends State<MainPage> {
       case PaintToolMode.vectorLine:
         toolToolbar = _getVectorLineToolToolbar();
         break;
+      case PaintToolMode.vectorPolygon:
+        toolToolbar = _getVectorPolygonToolToolbar();
+        break;
       default:
     }
 
@@ -259,9 +260,7 @@ class _MainPageState extends State<MainPage> {
                 _setCanvas(dimensions: 100);
               },
               onPaintToolModeSelected: (paintToolMode) {
-                setState(() {
-                  _paintConfig.paintToolMode = paintToolMode;
-                });
+                _setPaintToolMode(paintToolMode);
               },
               onZoomedIn: () {
                 _incrementScale(1);
@@ -281,13 +280,42 @@ class _MainPageState extends State<MainPage> {
     return _getColorPicker();
   }
 
+  Widget _getVectorPolygonToolToolbar() {
+    return Material(
+      color: Colors.transparent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Text(
+              'Polygon mode',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          VectorPolygonModePicker(
+            contentPadding: const EdgeInsets.only(right: 8),
+            groupValue: _paintConfig.vectorPolygonMode,
+            onChanged: (vectorPolygonMode) {
+              setState(() {
+                _paintConfig.vectorPolygonMode = vectorPolygonMode;
+              });
+            },
+          ),
+          const Divider(height: 1),
+          _getColorPicker(),
+        ],
+      ),
+    );
+  }
+
   void _handleTapEvent({
     required double dx,
     required double dy,
     required StrokeMode strokeMode,
   }) {
-    final x = ((dx - 8) / _paintConfig.canvasScale);
-    final y = ((dy - 8) / _paintConfig.canvasScale);
+    final x = ((dx - Constants.canvasPadding) / _paintConfig.canvasScale);
+    final y = ((dy - Constants.canvasPadding) / _paintConfig.canvasScale);
 
     if (x < 0 ||
         y < 0 ||
@@ -318,10 +346,12 @@ class _MainPageState extends State<MainPage> {
               color: _paintConfig.paintToolColor,
               endCoordinates: (x.floor(), y.floor()),
               startCoordinates: (
-                ((_strokeStartCoordinates!.$1.floor() - 8) /
+                ((_strokeStartCoordinates!.$1.floor() -
+                            Constants.canvasPadding) /
                         _paintConfig.canvasScale)
                     .floor(),
-                ((_strokeStartCoordinates!.$2.floor() - 8) /
+                ((_strokeStartCoordinates!.$2.floor() -
+                            Constants.canvasPadding) /
                         _paintConfig.canvasScale)
                     .floor(),
               ),
@@ -346,17 +376,21 @@ class _MainPageState extends State<MainPage> {
               return;
             }
 
-            _drawVector(
-              color: _paintConfig.paintToolColor,
-              coordinates: [
-                (
-                  ((_strokeStartCoordinates!.$1 - 8) /
-                      _paintConfig.canvasScale),
-                  ((_strokeStartCoordinates!.$2 - 8) /
-                      _paintConfig.canvasScale),
-                ),
-                (x, y),
-              ],
+            _addVector(
+              vector: Vector(
+                color: _paintConfig.paintToolColor,
+                nodes: [
+                  VectorNode.fromTuple(
+                    (
+                      ((_strokeStartCoordinates!.$1 - Constants.canvasPadding) /
+                          _paintConfig.canvasScale),
+                      ((_strokeStartCoordinates!.$2 - Constants.canvasPadding) /
+                          _paintConfig.canvasScale),
+                    ),
+                  ),
+                  VectorNode.fromTuple((x, y)),
+                ],
+              ),
             );
 
             _strokeStartCoordinates = null;
@@ -371,6 +405,31 @@ class _MainPageState extends State<MainPage> {
         }
 
         break;
+      case PaintToolMode.vectorPolygon:
+        switch (strokeMode) {
+          case StrokeMode.start:
+            if (_currentVector == null) {
+              final vector = Vector(
+                color: _paintConfig.paintToolColor,
+                nodes: [VectorNode.fromTuple((x, y))],
+              );
+
+              setState(() {
+                _currentVector = vector;
+              });
+
+              _addVector(vector: vector);
+            } else {
+              _currentVector!.nodes.add(VectorNode.fromTuple((x, y)));
+
+              _paintController.notify();
+            }
+
+            break;
+          default:
+        }
+
+        break;
       default:
     }
   }
@@ -378,7 +437,23 @@ class _MainPageState extends State<MainPage> {
   void _incrementScale(int value) {
     setState(() {
       _paintConfig.canvasScale =
-          Utils.clamp(_paintConfig.canvasScale + value, 1, 48).toInt();
+          Utils.clamp(_paintConfig.canvasScale + value, 1, 64).toInt();
+    });
+  }
+
+  void _resetCurrentVector() {
+    if (_currentVector == null || _currentVector!.nodes.isEmpty) {
+      return;
+    }
+
+    if (_paintConfig.vectorPolygonMode == VectorPolygonMode.closed) {
+      _currentVector!.nodes.add(
+        VectorNode.fromTuple(_currentVector!.nodes.first.coordinates),
+      );
+    }
+
+    setState(() {
+      _currentVector = null;
     });
   }
 
@@ -403,9 +478,17 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
+  void _setPaintToolMode(PaintToolMode paintToolMode) {
+    _resetCurrentVector();
+
+    setState(() {
+      _paintConfig.paintToolMode = paintToolMode;
+    });
+  }
+
   void _setScale(int value) {
     setState(() {
-      _paintConfig.canvasScale = Utils.clamp(value, 1, 48).toInt();
+      _paintConfig.canvasScale = Utils.clamp(value, 1, 64).toInt();
     });
   }
 
@@ -450,21 +533,23 @@ class _MainPageState extends State<MainPage> {
         bindings: <ShortcutActivator, VoidCallback>{
           // '
           const SingleActivator(LogicalKeyboardKey.quoteSingle): () {
-            setState(() {
-              _paintConfig.paintToolMode = PaintToolMode.pointer;
-            });
+            _setPaintToolMode(PaintToolMode.pointer);
           },
           // B
           const SingleActivator(LogicalKeyboardKey.keyB): () {
-            setState(() {
-              _paintConfig.paintToolMode = PaintToolMode.brush;
-            });
+            _setPaintToolMode(PaintToolMode.brush);
           },
           // L
           const SingleActivator(LogicalKeyboardKey.keyL): () {
-            setState(() {
-              _paintConfig.paintToolMode = PaintToolMode.line;
-            });
+            _setPaintToolMode(PaintToolMode.line);
+          },
+          // Ctrl + L
+          const SingleActivator(LogicalKeyboardKey.keyL, control: true): () {
+            _setPaintToolMode(PaintToolMode.vectorLine);
+          },
+          // Ctrl + P
+          const SingleActivator(LogicalKeyboardKey.keyP, control: true): () {
+            _setPaintToolMode(PaintToolMode.vectorPolygon);
           },
           // Ctrl + +
           const SingleActivator(LogicalKeyboardKey.equal, control: true): () {

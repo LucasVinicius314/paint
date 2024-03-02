@@ -61,21 +61,20 @@ class MainPainter extends CustomPainter {
       VectorNode? lastNode;
 
       for (var node in vector.nodes) {
-        if (lastNode == null) {
-          lastNode = node;
-          continue;
+        if (lastNode != null) {
+          for (var coordinate in lineDrawer.draw(
+            end: (node.coordinates.$1.floor(), node.coordinates.$2.floor()),
+            start: (
+              lastNode.coordinates.$1.floor(),
+              lastNode.coordinates.$2.floor(),
+            ),
+          )) {
+            tempLayer[coordinate.$1][coordinate.$2] =
+                Pixel.fromColor(vector.color);
+          }
         }
 
-        for (var coordinate in lineDrawer.draw(
-          end: (node.coordinates.$1.floor(), node.coordinates.$2.floor()),
-          start: (
-            lastNode.coordinates.$1.floor(),
-            lastNode.coordinates.$2.floor(),
-          ),
-        )) {
-          tempLayer[coordinate.$1][coordinate.$2] =
-              Pixel.fromColor(vector.color);
-        }
+        lastNode = node;
       }
     }
 

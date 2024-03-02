@@ -12,6 +12,12 @@ class App extends StatelessWidget {
       routes: {
         MainPage.route: (context) => const MainPage(),
       },
+      theme: ThemeData(
+        tooltipTheme: const TooltipThemeData(
+          // TODO: parametrized tooltip delay
+          waitDuration: Duration(seconds: 1),
+        ),
+      ),
       title: Constants.appName,
     );
   }
