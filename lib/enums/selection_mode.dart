@@ -1,0 +1,4 @@
+enum SelectionMode {
+  vectorClipping,
+  vectorSelection,
+}

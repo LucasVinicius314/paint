@@ -112,6 +112,17 @@ class PaintToolbar extends StatelessWidget {
               tooltip: 'Vector polygon (Ctrl + P)',
             ),
             const SizedBox(height: 8),
+            IconButton(
+              color: paintToolMode == PaintToolMode.vectorClip
+                  ? primaryColor
+                  : null,
+              icon: Icon(MdiIcons.contentCut),
+              onPressed: () {
+                onPaintToolModeSelected(PaintToolMode.vectorClip);
+              },
+              tooltip: 'Vector clip (Ctrl + W)',
+            ),
+            const SizedBox(height: 8),
             const Divider(height: 1),
             const SizedBox(height: 8),
             IconButton(

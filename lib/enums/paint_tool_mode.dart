@@ -3,6 +3,7 @@ enum PaintToolMode {
   circle,
   line,
   pointer,
+  vectorClip,
   vectorLine,
   vectorPolygon,
   vectorSelection,

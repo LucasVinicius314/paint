@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:paint/controllers/selection_controller.dart';
+import 'package:paint/enums/selection_mode.dart';
 
 class SelectionPainter extends CustomPainter {
   const SelectionPainter({
@@ -30,9 +31,12 @@ class SelectionPainter extends CustomPainter {
         ),
       ),
       Paint()
-        ..color = Colors.red.shade700
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
+        ..color = controller.selectionData!.selectionMode ==
+                SelectionMode.vectorClipping
+            ? Colors.green.shade700
+            : Colors.red.shade700
+        ..strokeWidth = 2
+        ..style = PaintingStyle.stroke,
     );
   }
 

@@ -82,6 +82,23 @@ class VectorPainter extends CustomPainter {
         );
       }
     }
+
+    final clippingRect = paintController.paintData!.clippingRect;
+
+    if (clippingRect != null) {
+      canvas.drawRect(
+        Rect.fromPoints(
+          Offset(clippingRect.$1.$1.toDouble(), clippingRect.$1.$2.toDouble()) *
+              scale,
+          Offset(clippingRect.$2.$1.toDouble(), clippingRect.$2.$2.toDouble()) *
+              scale,
+        ),
+        Paint()
+          ..color = Colors.green
+          ..strokeWidth = 2
+          ..style = PaintingStyle.stroke,
+      );
+    }
   }
 
   @override

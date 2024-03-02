@@ -82,13 +82,19 @@ class MainPainter extends CustomPainter {
             lastNode.coordinates.$2.floor(),
           );
 
-          // TODO: optional clipping
-          final clippedLine = clipper.clip(
-            end: end,
-            max: (75, 75),
-            min: (25, 25),
-            start: start,
-          );
+          // TODO: keybinds config/view
+
+          final clippedLine = paintData.clippingRect == null
+              ? (start, end)
+              : clipper.clip(
+                  end: end,
+                  max: (
+                    paintData.clippingRect!.$2.$1 - 1,
+                    paintData.clippingRect!.$2.$2 - 1,
+                  ),
+                  min: paintData.clippingRect!.$1,
+                  start: start,
+                );
 
           if (clippedLine != null) {
             for (var coordinate in lineDrawer.draw(

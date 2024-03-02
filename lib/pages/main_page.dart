@@ -7,6 +7,7 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:paint/controllers/paint_controller.dart';
 import 'package:paint/controllers/selection_controller.dart';
 import 'package:paint/enums/paint_tool_mode.dart';
+import 'package:paint/enums/selection_mode.dart';
 import 'package:paint/enums/stroke_mode.dart';
 import 'package:paint/model/paint_config.dart';
 import 'package:paint/model/paint_data.dart';
@@ -356,6 +357,8 @@ class _MainPageState extends State<MainPage> {
                 child: PaintToolbar(
                   onCleared: () {
                     _setCanvas(dimensions: 100);
+
+                    _resetCurrentVector();
                   },
                   onPaintToolModeSelected: (paintToolMode) {
                     _setPaintToolMode(paintToolMode);
@@ -538,6 +541,77 @@ class _MainPageState extends State<MainPage> {
         }
 
         break;
+      case PaintToolMode.vectorClip:
+        switch (strokeMode) {
+          case StrokeMode.click:
+            if (_paintController.paintData == null) {
+              return;
+            }
+
+            _paintController.paintData!.clippingRect = null;
+
+            break;
+          case StrokeMode.end:
+            if (_selectionController.selectionData == null ||
+                _selectionController.selectionData!.start ==
+                    _selectionController.selectionData!.end) {
+              return;
+            }
+
+            final start = _selectionController.selectionData!.start;
+            final end = (x.floor() + .5, y.floor() + .5);
+
+            final min = (
+              (math.min(start.$1, end.$1) - .5).round(),
+              (math.min(start.$2, end.$2) - .5).round(),
+            );
+
+            final max = (
+              (math.max(start.$1, end.$1) + .5).round(),
+              (math.max(start.$2, end.$2) + .5).round(),
+            );
+
+            _paintController.paintData!.clippingRect = (min, max);
+
+            _selectionController.setSelectionData(null);
+
+            break;
+          case StrokeMode.start:
+            final coordinates = (x.floor() + .5, y.floor() + .5);
+
+            _selectionController.setSelectionData(
+              SelectionData(
+                end: coordinates,
+                selectionMode: SelectionMode.vectorClipping,
+                start: coordinates,
+              ),
+            );
+
+            _lastStrokeCoordinates = (dx, dy);
+
+            break;
+          case StrokeMode.update:
+            if (_lastStrokeCoordinates == null) {
+              return;
+            }
+
+            if (_selectionController.selectionData != null) {
+              _selectionController.setSelectionData(
+                SelectionData(
+                  end: (x.floor() + .5, y.floor() + .5),
+                  selectionMode: SelectionMode.vectorClipping,
+                  start: _selectionController.selectionData!.start,
+                ),
+              );
+            }
+
+            _lastStrokeCoordinates = (dx, dy);
+
+            break;
+          default:
+        }
+
+        break;
       case PaintToolMode.vectorSelection:
         switch (strokeMode) {
           case StrokeMode.click:
@@ -573,7 +647,11 @@ class _MainPageState extends State<MainPage> {
             final coordinates = (x, y);
 
             _selectionController.setSelectionData(
-              SelectionData(end: coordinates, start: coordinates),
+              SelectionData(
+                end: coordinates,
+                selectionMode: SelectionMode.vectorSelection,
+                start: coordinates,
+              ),
             );
 
             _lastStrokeCoordinates = (dx, dy);
@@ -589,6 +667,7 @@ class _MainPageState extends State<MainPage> {
                 _selectionController.setSelectionData(
                   SelectionData(
                     end: (x, y),
+                    selectionMode: SelectionMode.vectorSelection,
                     start: _selectionController.selectionData!.start,
                   ),
                 );
@@ -693,6 +772,7 @@ class _MainPageState extends State<MainPage> {
   }
 
   void _resetCurrentVector() {
+    _selectionController.setSelectedNodes([]);
     _selectionController.setSelectionData(null);
 
     if (_currentVector == null || _currentVector!.nodes.isEmpty) {
@@ -715,6 +795,7 @@ class _MainPageState extends State<MainPage> {
 
     _paintController.setPaintData(
       PaintData(
+        clippingRect: null,
         pixels: List.generate(
           dimensions,
           (index) => List.generate(
@@ -807,6 +888,10 @@ class _MainPageState extends State<MainPage> {
           // Ctrl + P
           const SingleActivator(LogicalKeyboardKey.keyP, control: true): () {
             _setPaintToolMode(PaintToolMode.vectorPolygon);
+          },
+          // Ctrl + W
+          const SingleActivator(LogicalKeyboardKey.keyW, control: true): () {
+            _setPaintToolMode(PaintToolMode.vectorClip);
           },
           // Ctrl + +
           const SingleActivator(LogicalKeyboardKey.equal, control: true): () {
