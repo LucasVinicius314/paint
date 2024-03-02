@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:paint/controllers/paint_controller.dart';
 import 'package:paint/controllers/selection_controller.dart';
 import 'package:paint/enums/paint_tool_mode.dart';
@@ -86,7 +87,47 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
+  void _flipHorizontally({
+    required List<VectorNode> selectedNodes,
+  }) {
+    final xCoords = selectedNodes.map((e) => e.coordinates.$1).toList();
+
+    final minX = Utils.min(xCoords);
+    final maxX = Utils.max(xCoords);
+
+    for (var node in selectedNodes) {
+      node.coordinates = (
+        maxX - (node.coordinates.$1 - minX),
+        node.coordinates.$2,
+      );
+
+      _paintController.notify();
+    }
+  }
+
+  void _flipVertically({
+    required List<VectorNode> selectedNodes,
+  }) {
+    final yCoords = selectedNodes.map((e) => e.coordinates.$2).toList();
+
+    final minY = Utils.min(yCoords);
+    final maxY = Utils.max(yCoords);
+
+    for (var node in selectedNodes) {
+      node.coordinates = (
+        node.coordinates.$1,
+        maxY - (node.coordinates.$2 - minY),
+      );
+
+      _paintController.notify();
+    }
+  }
+
   Widget _getBrushToolToolbar() {
+    return _getColorPicker();
+  }
+
+  Widget _getCircleToolToolbar() {
     return _getColorPicker();
   }
 
@@ -266,57 +307,73 @@ class _MainPageState extends State<MainPage> {
   }
 
   Widget _getRightPanel() {
-    Widget? toolToolbar;
+    return ListenableBuilder(
+      listenable: _selectionController,
+      builder: (context, child) {
+        Widget? toolToolbar;
 
-    switch (_paintConfig.paintToolMode) {
-      case PaintToolMode.brush:
-        toolToolbar = _getBrushToolToolbar();
-        break;
-      case PaintToolMode.line:
-        toolToolbar = _getLineToolToolbar();
-        break;
-      case PaintToolMode.vectorLine:
-        toolToolbar = _getVectorLineToolToolbar();
-        break;
-      case PaintToolMode.vectorPolygon:
-        toolToolbar = _getVectorPolygonToolToolbar();
-        break;
-      default:
-    }
+        switch (_paintConfig.paintToolMode) {
+          case PaintToolMode.brush:
+            toolToolbar = _getBrushToolToolbar();
+            break;
+          case PaintToolMode.line:
+            toolToolbar = _getLineToolToolbar();
+            break;
+          case PaintToolMode.circle:
+            toolToolbar = _getCircleToolToolbar();
+            break;
+          case PaintToolMode.vectorSelection:
+            if (_selectionController.selectedNodes.isNotEmpty) {
+              toolToolbar = _getVectorSelectionToolToolbar(
+                selectedNodes: _selectionController.selectedNodes,
+              );
+            }
 
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AnimatedSize(
-            duration: const Duration(milliseconds: 100),
-            child: Container(
-              child: toolToolbar == null
-                  ? null
-                  : IntrinsicWidth(child: toolToolbar),
-            ),
+            break;
+          case PaintToolMode.vectorLine:
+            toolToolbar = _getVectorLineToolToolbar();
+            break;
+          case PaintToolMode.vectorPolygon:
+            toolToolbar = _getVectorPolygonToolToolbar();
+            break;
+          default:
+        }
+
+        return Container(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AnimatedSize(
+                duration: const Duration(milliseconds: 100),
+                child: Container(
+                  child: toolToolbar == null
+                      ? null
+                      : IntrinsicWidth(child: toolToolbar),
+                ),
+              ),
+              if (toolToolbar != null) const VerticalDivider(width: 1),
+              IntrinsicWidth(
+                child: PaintToolbar(
+                  onCleared: () {
+                    _setCanvas(dimensions: 100);
+                  },
+                  onPaintToolModeSelected: (paintToolMode) {
+                    _setPaintToolMode(paintToolMode);
+                  },
+                  onZoomedIn: () {
+                    _incrementScale(1);
+                  },
+                  onZoomedOut: () {
+                    _incrementScale(-1);
+                  },
+                  paintToolMode: _paintConfig.paintToolMode,
+                ),
+              ),
+            ],
           ),
-          if (toolToolbar != null) const VerticalDivider(width: 1),
-          IntrinsicWidth(
-            child: PaintToolbar(
-              onCleared: () {
-                _setCanvas(dimensions: 100);
-              },
-              onPaintToolModeSelected: (paintToolMode) {
-                _setPaintToolMode(paintToolMode);
-              },
-              onZoomedIn: () {
-                _incrementScale(1);
-              },
-              onZoomedOut: () {
-                _incrementScale(-1);
-              },
-              paintToolMode: _paintConfig.paintToolMode,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -350,6 +407,43 @@ class _MainPageState extends State<MainPage> {
           _getColorPicker(),
         ],
       ),
+    );
+  }
+
+  Widget _getVectorSelectionToolToolbar({
+    required List<VectorNode> selectedNodes,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: Text(
+            'Action',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+        IconButton(
+          icon: Icon(MdiIcons.flipHorizontal),
+          onPressed: selectedNodes.length <= 1
+              ? null
+              : () {
+                  _flipHorizontally(selectedNodes: selectedNodes);
+                },
+          tooltip: 'Flip horizontally',
+        ),
+        const SizedBox(height: 8),
+        IconButton(
+          icon: Icon(MdiIcons.flipVertical),
+          onPressed: selectedNodes.length <= 1
+              ? null
+              : () {
+                  _flipVertically(selectedNodes: selectedNodes);
+                },
+          tooltip: 'Flip vertically',
+        ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 

@@ -24,4 +24,28 @@ class Utils {
 
     return (xPos || xNeg) && (yPos || yNeg);
   }
+
+  static double max(List<num> values) {
+    var max = double.negativeInfinity;
+
+    for (var value in values) {
+      if (value > max) {
+        max = value.toDouble();
+      }
+    }
+
+    return max;
+  }
+
+  static double min(List<num> values) {
+    var min = double.infinity;
+
+    for (var value in values) {
+      if (value < min) {
+        min = value.toDouble();
+      }
+    }
+
+    return min;
+  }
 }

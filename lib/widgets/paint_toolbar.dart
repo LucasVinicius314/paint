@@ -26,7 +26,7 @@ class PaintToolbar extends StatelessWidget {
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(8),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             IconButton(
               color:
