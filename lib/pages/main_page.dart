@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,7 +37,7 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   final _paintConfig = PaintConfig();
 
-  final _paintController = PaintController();
+  late final _paintController = PaintController(paintConfig: _paintConfig);
   final _selectionController = SelectionController();
 
   (double, double)? _strokeStartCoordinates;
@@ -47,6 +49,18 @@ class _MainPageState extends State<MainPage> {
     required Vector vector,
   }) {
     _paintController.addVector(vector: vector);
+  }
+
+  void _drawCircle({
+    required (int, int) centerCoordinates,
+    required Color color,
+    required int radius,
+  }) {
+    _paintController.setCircle(
+      centerCoordinates: centerCoordinates,
+      pixel: Pixel.fromColor(color),
+      radius: radius,
+    );
   }
 
   void _drawLine({
@@ -108,6 +122,13 @@ class _MainPageState extends State<MainPage> {
                 dx: details.localPosition.dx,
                 dy: details.localPosition.dy,
                 strokeMode: StrokeMode.start,
+              );
+            },
+            onTapUp: (details) {
+              _handleTapEvent(
+                dx: details.localPosition.dx,
+                dy: details.localPosition.dx,
+                strokeMode: StrokeMode.click,
               );
             },
             onPanEnd: (details) {
@@ -184,17 +205,28 @@ class _MainPageState extends State<MainPage> {
               padding: const EdgeInsets.all(8),
               scrollDirection: Axis.horizontal,
               child: IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      '${(_paintConfig.canvasScale * 100).toStringAsFixed(0)}%',
-                    ),
-                    const VerticalDivider(width: 16),
-                    Text(
-                      '${_paintConfig.canvasDimensions.$1.toStringAsFixed(0)} x ${_paintConfig.canvasDimensions.$2.toStringAsFixed(0)} px',
-                    ),
-                  ],
+                child: ListenableBuilder(
+                  listenable: _selectionController,
+                  builder: (context, child) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          '${(_paintConfig.canvasScale * 100).toStringAsFixed(0)}%',
+                        ),
+                        const VerticalDivider(width: 16),
+                        Text(
+                          '${_paintConfig.canvasDimensions.$1.toStringAsFixed(0)} x ${_paintConfig.canvasDimensions.$2.toStringAsFixed(0)} px',
+                        ),
+                        if (_selectionController.selectedNodes.isNotEmpty) ...[
+                          const VerticalDivider(width: 16),
+                          Text(
+                            '${_selectionController.selectedNodes.length.toStringAsFixed(0)} node${_selectionController.selectedNodes.length == 1 ? '' : 's'} selected',
+                          ),
+                        ],
+                      ],
+                    );
+                  },
                 ),
               ),
             ),
@@ -329,14 +361,6 @@ class _MainPageState extends State<MainPage> {
     final x = ((dx - Constants.canvasPadding) / _paintConfig.canvasScale);
     final y = ((dy - Constants.canvasPadding) / _paintConfig.canvasScale);
 
-    if (x < 0 ||
-        y < 0 ||
-        x >= _paintConfig.canvasDimensions.$1 ||
-        y >= _paintConfig.canvasDimensions.$2) {
-      _lastStrokeCoordinates = null;
-      return;
-    }
-
     switch (_paintConfig.paintToolMode) {
       case PaintToolMode.brush:
         if ([StrokeMode.start, StrokeMode.update].contains(strokeMode)) {
@@ -344,6 +368,45 @@ class _MainPageState extends State<MainPage> {
             coordinates: (x.floor(), y.floor()),
             color: _paintConfig.paintToolColor,
           );
+        }
+
+        break;
+      case PaintToolMode.circle:
+        // TODO: fix, vector layer to represent radius
+        switch (strokeMode) {
+          case StrokeMode.end:
+            if (_strokeStartCoordinates == null) {
+              return;
+            }
+
+            final center = (
+              ((_strokeStartCoordinates!.$1.floor() - Constants.canvasPadding) /
+                      _paintConfig.canvasScale)
+                  .floor(),
+              ((_strokeStartCoordinates!.$2.floor() - Constants.canvasPadding) /
+                      _paintConfig.canvasScale)
+                  .floor(),
+            );
+
+            _drawCircle(
+              color: _paintConfig.paintToolColor,
+              centerCoordinates: center,
+              radius: math
+                  .sqrt(math.pow(center.$1 - x, 2) + math.pow(center.$2 - y, 2))
+                  .abs()
+                  .floor(),
+            );
+
+            _strokeStartCoordinates = null;
+
+            break;
+          case StrokeMode.start:
+            _strokeStartCoordinates = (dx, dy);
+            break;
+          case StrokeMode.update:
+            _lastStrokeCoordinates = (dx, dy);
+            break;
+          default:
         }
 
         break;
@@ -370,6 +433,7 @@ class _MainPageState extends State<MainPage> {
             );
 
             _strokeStartCoordinates = null;
+
             break;
           case StrokeMode.start:
             _strokeStartCoordinates = (dx, dy);
@@ -383,18 +447,26 @@ class _MainPageState extends State<MainPage> {
         break;
       case PaintToolMode.vectorSelection:
         switch (strokeMode) {
+          case StrokeMode.click:
+            _selectionController.setSelectedNodes([]);
+            _selectionController.setSelectionData(null);
           case StrokeMode.end:
+            if (_selectionController.selectionData == null ||
+                _selectionController.selectionData!.start ==
+                    _selectionController.selectionData!.end) {
+              return;
+            }
+
             final selectedNodes = <VectorNode>[];
 
             for (final vector
                 in _paintController.paintData?.vectors ?? <Vector>[]) {
               for (final node in vector.nodes) {
-                if (_selectionController.selectionData != null &&
-                    Utils.isPointInsideRect(
-                      end: _selectionController.selectionData!.end,
-                      point: node.coordinates,
-                      start: _selectionController.selectionData!.start,
-                    )) {
+                if (Utils.isPointInsideRect(
+                  end: _selectionController.selectionData!.end,
+                  point: node.coordinates,
+                  start: _selectionController.selectionData!.start,
+                )) {
                   selectedNodes.add(node);
                 }
               }
@@ -405,8 +477,10 @@ class _MainPageState extends State<MainPage> {
 
             break;
           case StrokeMode.start:
+            final coordinates = (x, y);
+
             _selectionController.setSelectionData(
-              SelectionData(end: (x, y), start: (x, y)),
+              SelectionData(end: coordinates, start: coordinates),
             );
 
             _lastStrokeCoordinates = (dx, dy);
@@ -439,8 +513,6 @@ class _MainPageState extends State<MainPage> {
 
               _paintController.notify();
             }
-
-            // TODO: fix, calculate selection bounds and bind bounds to canvas bounds
 
             _lastStrokeCoordinates = (dx, dy);
 
@@ -476,6 +548,7 @@ class _MainPageState extends State<MainPage> {
             );
 
             _strokeStartCoordinates = null;
+
             break;
           case StrokeMode.start:
             _strokeStartCoordinates = (dx, dy);
@@ -485,6 +558,8 @@ class _MainPageState extends State<MainPage> {
             break;
           default:
         }
+
+        // TODO: fix, delete vector nodes and vector
 
         break;
       case PaintToolMode.vectorPolygon:
@@ -530,8 +605,6 @@ class _MainPageState extends State<MainPage> {
     if (_currentVector == null || _currentVector!.nodes.isEmpty) {
       return;
     }
-
-    // TODO: circles
 
     // TODO: remove vector from vectors if theres only one node
 
@@ -632,6 +705,10 @@ class _MainPageState extends State<MainPage> {
           const SingleActivator(LogicalKeyboardKey.keyL): () {
             _setPaintToolMode(PaintToolMode.line);
           },
+          // R
+          const SingleActivator(LogicalKeyboardKey.keyR): () {
+            _setPaintToolMode(PaintToolMode.circle);
+          },
           // Ctrl + Q
           const SingleActivator(LogicalKeyboardKey.keyQ, control: true): () {
             _setPaintToolMode(PaintToolMode.vectorSelection);
@@ -655,6 +732,17 @@ class _MainPageState extends State<MainPage> {
           // Ctrl + 0
           const SingleActivator(LogicalKeyboardKey.digit0, control: true): () {
             _setScale(1);
+          },
+          // Ctrl + A
+          const SingleActivator(LogicalKeyboardKey.keyA, control: true): () {
+            if (_paintConfig.paintToolMode == PaintToolMode.vectorSelection) {
+              final allNodes = (_paintController.paintData?.vectors ?? [])
+                  .map((e) => e.nodes)
+                  .expand((element) => element)
+                  .toList();
+
+              _selectionController.setSelectedNodes(allNodes);
+            }
           },
           // Ctrl + Delete
           const SingleActivator(LogicalKeyboardKey.delete, control: true): () {

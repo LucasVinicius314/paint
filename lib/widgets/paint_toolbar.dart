@@ -62,6 +62,16 @@ class PaintToolbar extends StatelessWidget {
               },
               tooltip: 'Line (L)',
             ),
+            const SizedBox(height: 8),
+            IconButton(
+              color:
+                  paintToolMode == PaintToolMode.circle ? primaryColor : null,
+              icon: Icon(MdiIcons.circleOutline),
+              onPressed: () {
+                onPaintToolModeSelected(PaintToolMode.circle);
+              },
+              tooltip: 'Circle (R)',
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(

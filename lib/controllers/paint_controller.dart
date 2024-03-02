@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
+
+import 'package:paint/drawers/circle/bresenham_circle_drawer.dart';
 import 'package:paint/drawers/line/base_line_drawer.dart';
 import 'package:paint/drawers/line/bresenham_line_drawer.dart';
 import 'package:paint/drawers/line/dda_line_drawer.dart';
 import 'package:paint/enums/line_drawing_mode.dart';
+import 'package:paint/model/paint_config.dart';
 import 'package:paint/model/paint_data.dart';
 import 'package:paint/model/pixel.dart';
 import 'package:paint/model/vector.dart';
+import 'package:paint/utils/utils.dart';
 
 class PaintController extends ChangeNotifier {
+  PaintController({
+    required this.paintConfig,
+  });
+
+  PaintConfig paintConfig;
   PaintData? paintData;
 
   void addVector({
@@ -23,6 +32,27 @@ class PaintController extends ChangeNotifier {
   }
 
   void notify() {
+    notifyListeners();
+  }
+
+  void setCircle({
+    required (int, int) centerCoordinates,
+    required Pixel pixel,
+    required int radius,
+  }) {
+    if (paintData == null) {
+      return;
+    }
+
+    final circleDrawer = BresenhamCircleDrawer();
+
+    for (var coordinate in circleDrawer.draw(
+      center: centerCoordinates,
+      radius: radius,
+    )) {
+      _alterPixel(coordinates: coordinate, pixel: pixel);
+    }
+
     notifyListeners();
   }
 
@@ -53,7 +83,7 @@ class PaintController extends ChangeNotifier {
       end: endCoordinates,
       start: startCoordinates,
     )) {
-      paintData!.pixels[coordinate.$1][coordinate.$2] = pixel;
+      _alterPixel(coordinates: coordinate, pixel: pixel);
     }
 
     notifyListeners();
@@ -73,8 +103,28 @@ class PaintController extends ChangeNotifier {
       return;
     }
 
-    paintData!.pixels[coordinates.$1][coordinates.$2] = pixel;
+    _alterPixel(coordinates: coordinates, pixel: pixel);
 
     notifyListeners();
+  }
+
+  void _alterPixel({
+    required (int, int) coordinates,
+    required Pixel pixel,
+  }) {
+    if (paintData == null) {
+      return;
+    }
+
+    if (Utils.isPointInsideRect(
+      end: (
+        paintConfig.canvasDimensions.$1.toDouble() - 1,
+        paintConfig.canvasDimensions.$2.toDouble() - 1,
+      ),
+      point: (coordinates.$1.toDouble(), coordinates.$2.toDouble()),
+      start: (0, 0),
+    )) {
+      paintData!.pixels[coordinates.$1][coordinates.$2] = pixel;
+    }
   }
 }

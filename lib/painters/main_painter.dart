@@ -9,6 +9,7 @@ import 'package:paint/enums/line_drawing_mode.dart';
 import 'package:paint/model/paint_config.dart';
 import 'package:paint/model/pixel.dart';
 import 'package:paint/model/vector_node.dart';
+import 'package:paint/utils/utils.dart';
 
 class MainPainter extends CustomPainter {
   const MainPainter({
@@ -69,8 +70,17 @@ class MainPainter extends CustomPainter {
               lastNode.coordinates.$2.floor(),
             ),
           )) {
-            tempLayer[coordinate.$1][coordinate.$2] =
-                Pixel.fromColor(vector.color);
+            if (Utils.isPointInsideRect(
+              end: (
+                paintConfig.canvasDimensions.$1.toDouble() - 1,
+                paintConfig.canvasDimensions.$2.toDouble() - 1,
+              ),
+              point: (coordinate.$1.toDouble(), coordinate.$2.toDouble()),
+              start: (0, 0),
+            )) {
+              tempLayer[coordinate.$1][coordinate.$2] =
+                  Pixel.fromColor(vector.color);
+            }
           }
         }
 
