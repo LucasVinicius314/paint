@@ -4,4 +4,5 @@ enum PaintToolMode {
   pointer,
   vectorLine,
   vectorPolygon,
+  vectorSelection,
 }

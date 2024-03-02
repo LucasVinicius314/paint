@@ -10,12 +10,6 @@ import 'package:paint/model/vector.dart';
 class PaintController extends ChangeNotifier {
   PaintData? paintData;
 
-  void setPaintData(PaintData newpaintData) {
-    paintData = newpaintData;
-
-    notifyListeners();
-  }
-
   void addVector({
     required Vector vector,
   }) {
@@ -61,6 +55,12 @@ class PaintController extends ChangeNotifier {
     )) {
       paintData!.pixels[coordinate.$1][coordinate.$2] = pixel;
     }
+
+    notifyListeners();
+  }
+
+  void setPaintData(PaintData newpPaintData) {
+    paintData = newpPaintData;
 
     notifyListeners();
   }

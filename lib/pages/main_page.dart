@@ -2,15 +2,18 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:paint/controllers/paint_controller.dart';
+import 'package:paint/controllers/selection_controller.dart';
 import 'package:paint/enums/paint_tool_mode.dart';
 import 'package:paint/enums/stroke_mode.dart';
 import 'package:paint/enums/vector_polygon_mode.dart';
 import 'package:paint/model/paint_config.dart';
 import 'package:paint/model/paint_data.dart';
 import 'package:paint/model/pixel.dart';
+import 'package:paint/model/selection_data.dart';
 import 'package:paint/model/vector.dart';
 import 'package:paint/model/vector_node.dart';
 import 'package:paint/painters/main_painter.dart';
+import 'package:paint/painters/selection_painter.dart';
 import 'package:paint/painters/vector_painter.dart';
 import 'package:paint/utils/constants.dart';
 import 'package:paint/utils/utils.dart';
@@ -33,6 +36,7 @@ class _MainPageState extends State<MainPage> {
   final _paintConfig = PaintConfig();
 
   final _paintController = PaintController();
+  final _selectionController = SelectionController();
 
   (double, double)? _strokeStartCoordinates;
   (double, double)? _lastStrokeCoordinates;
@@ -153,7 +157,15 @@ class _MainPageState extends State<MainPage> {
                     ),
                     CustomPaint(
                       painter: VectorPainter(
-                        controller: _paintController,
+                        selectionController: _selectionController,
+                        paintController: _paintController,
+                        paddingOffset: Constants.canvasPadding,
+                        scale: _paintConfig.canvasScale.toDouble(),
+                      ),
+                    ),
+                    CustomPaint(
+                      painter: SelectionPainter(
+                        controller: _selectionController,
                         paddingOffset: Constants.canvasPadding,
                         scale: _paintConfig.canvasScale.toDouble(),
                       ),
@@ -369,10 +381,79 @@ class _MainPageState extends State<MainPage> {
         }
 
         break;
+      case PaintToolMode.vectorSelection:
+        switch (strokeMode) {
+          case StrokeMode.end:
+            final selectedNodes = <VectorNode>[];
+
+            for (final vector
+                in _paintController.paintData?.vectors ?? <Vector>[]) {
+              for (final node in vector.nodes) {
+                if (_selectionController.selectionData != null &&
+                    Utils.isPointInsideRect(
+                      end: _selectionController.selectionData!.end,
+                      point: node.coordinates,
+                      start: _selectionController.selectionData!.start,
+                    )) {
+                  selectedNodes.add(node);
+                }
+              }
+            }
+
+            _selectionController.setSelectedNodes(selectedNodes);
+            _selectionController.setSelectionData(null);
+
+            break;
+          case StrokeMode.start:
+            _selectionController.setSelectionData(
+              SelectionData(end: (x, y), start: (x, y)),
+            );
+
+            _lastStrokeCoordinates = (dx, dy);
+
+            break;
+          case StrokeMode.update:
+            if (_lastStrokeCoordinates == null) {
+              return;
+            }
+
+            if (_selectionController.selectedNodes.isEmpty) {
+              if (_selectionController.selectionData != null) {
+                _selectionController.setSelectionData(
+                  SelectionData(
+                    end: (x, y),
+                    start: _selectionController.selectionData!.start,
+                  ),
+                );
+              }
+            } else {
+              final ddx =
+                  (dx - _lastStrokeCoordinates!.$1) / _paintConfig.canvasScale;
+              final ddy =
+                  (dy - _lastStrokeCoordinates!.$2) / _paintConfig.canvasScale;
+
+              for (var node in _selectionController.selectedNodes) {
+                node.coordinates =
+                    (node.coordinates.$1 + ddx, node.coordinates.$2 + ddy);
+              }
+
+              _paintController.notify();
+            }
+
+            // TODO: fix, calculate selection bounds and bind bounds to canvas bounds
+
+            _lastStrokeCoordinates = (dx, dy);
+
+            break;
+          default:
+        }
+
+        break;
       case PaintToolMode.vectorLine:
         switch (strokeMode) {
           case StrokeMode.end:
-            if (_strokeStartCoordinates == null) {
+            if (_strokeStartCoordinates == null ||
+                _lastStrokeCoordinates == null) {
               return;
             }
 
@@ -390,6 +471,7 @@ class _MainPageState extends State<MainPage> {
                   ),
                   VectorNode.fromTuple((x, y)),
                 ],
+                vectorPolygonMode: _paintConfig.vectorPolygonMode,
               ),
             );
 
@@ -412,6 +494,7 @@ class _MainPageState extends State<MainPage> {
               final vector = Vector(
                 color: _paintConfig.paintToolColor,
                 nodes: [VectorNode.fromTuple((x, y))],
+                vectorPolygonMode: _paintConfig.vectorPolygonMode,
               );
 
               setState(() {
@@ -442,11 +525,17 @@ class _MainPageState extends State<MainPage> {
   }
 
   void _resetCurrentVector() {
+    _selectionController.setSelectionData(null);
+
     if (_currentVector == null || _currentVector!.nodes.isEmpty) {
       return;
     }
 
-    if (_paintConfig.vectorPolygonMode == VectorPolygonMode.closed) {
+    // TODO: circles
+
+    // TODO: remove vector from vectors if theres only one node
+
+    if (_currentVector!.vectorPolygonMode == VectorPolygonMode.closed) {
       _currentVector!.nodes.add(
         VectorNode.fromTuple(_currentVector!.nodes.first.coordinates),
       );
@@ -542,6 +631,10 @@ class _MainPageState extends State<MainPage> {
           // L
           const SingleActivator(LogicalKeyboardKey.keyL): () {
             _setPaintToolMode(PaintToolMode.line);
+          },
+          // Ctrl + Q
+          const SingleActivator(LogicalKeyboardKey.keyQ, control: true): () {
+            _setPaintToolMode(PaintToolMode.vectorSelection);
           },
           // Ctrl + L
           const SingleActivator(LogicalKeyboardKey.keyL, control: true): () {

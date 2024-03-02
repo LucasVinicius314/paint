@@ -44,6 +44,7 @@ class PaintToolbar extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
+            // TODO: raster selection tool (Q)
             IconButton(
               color: paintToolMode == PaintToolMode.brush ? primaryColor : null,
               icon: Icon(MdiIcons.brush),
@@ -68,6 +69,17 @@ class PaintToolbar extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
+            IconButton(
+              color: paintToolMode == PaintToolMode.vectorSelection
+                  ? primaryColor
+                  : null,
+              icon: Icon(MdiIcons.vectorSelection),
+              onPressed: () {
+                onPaintToolModeSelected(PaintToolMode.vectorSelection);
+              },
+              tooltip: 'Vector selection (Ctrl + Q)',
+            ),
+            const SizedBox(height: 8),
             IconButton(
               color: paintToolMode == PaintToolMode.vectorLine
                   ? primaryColor
