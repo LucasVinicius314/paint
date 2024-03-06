@@ -14,7 +14,6 @@ class App extends StatelessWidget {
       },
       theme: ThemeData(
         tooltipTheme: const TooltipThemeData(
-          // TODO: parametrized tooltip delay
           waitDuration: Duration(seconds: 1),
         ),
       ),

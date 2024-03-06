@@ -468,7 +468,6 @@ class _MainPageState extends State<MainPage> {
 
         break;
       case PaintToolMode.circle:
-        // TODO: vector layer to represent radius
         switch (strokeMode) {
           case StrokeMode.end:
             if (_strokeStartCoordinates == null) {
@@ -731,8 +730,6 @@ class _MainPageState extends State<MainPage> {
           default:
         }
 
-        // TODO: delete vector nodes and vector
-
         break;
       case PaintToolMode.vectorPolygon:
         switch (strokeMode) {
@@ -845,6 +842,11 @@ class _MainPageState extends State<MainPage> {
                   builder: (context) {
                     return SettingsDialog(
                       paintConfig: _paintConfig,
+                      onClippingModeChanged: (clippingMode) {
+                        setState(() {
+                          _paintConfig.clippingMode = clippingMode;
+                        });
+                      },
                       onVectorLineDrawingModeChanged: (lineDrawingMode) {
                         setState(() {
                           _paintConfig.vectorLineDrawingMode = lineDrawingMode;

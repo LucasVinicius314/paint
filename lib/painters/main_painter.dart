@@ -1,11 +1,14 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:paint/clippers/base_clipper.dart';
 import 'package:paint/clippers/cohen_sutherland_clipper.dart';
+import 'package:paint/clippers/liang_barsky_clipper.dart';
 import 'package:paint/controllers/paint_controller.dart';
 import 'package:paint/drawers/line/base_line_drawer.dart';
 import 'package:paint/drawers/line/bresenham_line_drawer.dart';
 import 'package:paint/drawers/line/dda_line_drawer.dart';
+import 'package:paint/enums/clipping_mode.dart';
 import 'package:paint/enums/line_drawing_mode.dart';
 import 'package:paint/enums/vector_polygon_mode.dart';
 import 'package:paint/model/paint_config.dart';
@@ -44,9 +47,6 @@ class MainPainter extends CustomPainter {
       }
     }
 
-    // TODO: add ctrl + z
-    // TODO: add panning
-
     BaseLineDrawer lineDrawer;
 
     switch (paintConfig.vectorLineDrawingMode) {
@@ -57,11 +57,21 @@ class MainPainter extends CustomPainter {
         lineDrawer = DDALineDrawer();
         break;
       default:
-        throw 'Invalid LineDrawingMode [$paintConfig.vectorLineDrawingMode]';
+        throw 'Invalid LineDrawingMode [${paintConfig.vectorLineDrawingMode}]';
     }
 
-    // TODO: multiple clipping algorithms
-    final clipper = CohenSutherlandClipper();
+    BaseClipper clipper;
+
+    switch (paintConfig.clippingMode) {
+      case ClippingMode.cohenSutherland:
+        clipper = CohenSutherlandClipper();
+        break;
+      case ClippingMode.liangBarsky:
+        clipper = LiangBarskyClipper();
+        break;
+      default:
+        throw 'Invalid ClippingMode [${paintConfig.clippingMode}]';
+    }
 
     for (var vector in paintData.vectors) {
       VectorNode? lastNode;
@@ -81,8 +91,6 @@ class MainPainter extends CustomPainter {
             lastNode.coordinates.$1.floor(),
             lastNode.coordinates.$2.floor(),
           );
-
-          // TODO: keybinds config/view
 
           final clippedLine = paintData.clippingRect == null
               ? (start, end)

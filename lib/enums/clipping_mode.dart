@@ -1,0 +1,4 @@
+enum ClippingMode {
+  cohenSutherland,
+  liangBarsky,
+}

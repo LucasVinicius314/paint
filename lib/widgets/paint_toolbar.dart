@@ -44,7 +44,6 @@ class PaintToolbar extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
-            // TODO: raster selection tool (Q)
             IconButton(
               color: paintToolMode == PaintToolMode.brush ? primaryColor : null,
               icon: Icon(MdiIcons.brush),
