@@ -13,3 +13,4 @@ void main() {
 // TODO: hide vector lines config
 // TODO: parametrize tooltip delay config
 // TODO: vector node deletion tool
+// TODO: delete vector selection

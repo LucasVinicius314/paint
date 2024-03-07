@@ -7,6 +7,7 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:paint/controllers/paint_controller.dart';
 import 'package:paint/controllers/selection_controller.dart';
 import 'package:paint/enums/paint_tool_mode.dart';
+import 'package:paint/enums/rotation_step.dart';
 import 'package:paint/enums/selection_mode.dart';
 import 'package:paint/enums/stroke_mode.dart';
 import 'package:paint/model/paint_config.dart';
@@ -22,7 +23,9 @@ import 'package:paint/utils/constants.dart';
 import 'package:paint/utils/utils.dart';
 import 'package:paint/widgets/color_picker.dart';
 import 'package:paint/widgets/line_drawing_mode_picker.dart';
+import 'package:paint/widgets/paint_info_toolbar.dart';
 import 'package:paint/widgets/paint_toolbar.dart';
+import 'package:paint/widgets/rotation_step_picker.dart';
 import 'package:paint/widgets/settings_dialog.dart';
 import 'package:paint/widgets/vector_polygon_mode_picker.dart';
 
@@ -239,39 +242,9 @@ class _MainPageState extends State<MainPage> {
           ),
         ),
         const Divider(height: 1),
-        Container(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          child: IntrinsicHeight(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(8),
-              scrollDirection: Axis.horizontal,
-              child: IntrinsicHeight(
-                child: ListenableBuilder(
-                  listenable: _selectionController,
-                  builder: (context, child) {
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          '${(_paintConfig.canvasScale * 100).toStringAsFixed(0)}%',
-                        ),
-                        const VerticalDivider(width: 16),
-                        Text(
-                          '${_paintConfig.canvasDimensions.$1.toStringAsFixed(0)} x ${_paintConfig.canvasDimensions.$2.toStringAsFixed(0)} px',
-                        ),
-                        if (_selectionController.selectedNodes.isNotEmpty) ...[
-                          const VerticalDivider(width: 16),
-                          Text(
-                            '${_selectionController.selectedNodes.length.toStringAsFixed(0)} node${_selectionController.selectedNodes.length == 1 ? '' : 's'} selected',
-                          ),
-                        ],
-                      ],
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
+        PaintInfoToolbar(
+          paintConfig: _paintConfig,
+          selectionController: _selectionController,
         ),
       ],
     );
@@ -444,7 +417,22 @@ class _MainPageState extends State<MainPage> {
                 },
           tooltip: 'Flip vertically',
         ),
-        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: Text(
+            'Rotation step',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+        RotationStepPicker(
+          contentPadding: const EdgeInsets.only(right: 8),
+          groupValue: _paintConfig.rotationStep,
+          onChanged: (rotationStep) {
+            setState(() {
+              _paintConfig.rotationStep = rotationStep;
+            });
+          },
+        ),
       ],
     );
   }
@@ -783,6 +771,40 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  void _rotateSelection(double angle) {
+    final radAngle = angle * (math.pi / 180.0);
+
+    final sinAngle = math.sin(radAngle);
+    final cosAngle = math.cos(radAngle);
+
+    final xList = _selectionController.selectedNodes
+        .map((e) => e.coordinates.$1)
+        .toList();
+    final yList = _selectionController.selectedNodes
+        .map((e) => e.coordinates.$2)
+        .toList();
+
+    final xMin = Utils.min(xList);
+    final yMin = Utils.min(yList);
+
+    final xMax = Utils.max(xList);
+    final yMax = Utils.max(yList);
+
+    final center = (xMin + (xMax - xMin) / 2, yMin + (yMax - yMin) / 2);
+
+    for (var node in _selectionController.selectedNodes) {
+      final translatedX = node.coordinates.$1 - center.$1;
+      final translatedY = node.coordinates.$2 - center.$2;
+
+      node.coordinates = (
+        cosAngle * translatedX - sinAngle * translatedY + center.$1,
+        sinAngle * translatedX + cosAngle * translatedY + center.$2
+      );
+    }
+
+    _paintController.notify();
+  }
+
   void _setCanvas({
     required int dimensions,
   }) {
@@ -932,13 +954,21 @@ class _MainPageState extends State<MainPage> {
                 LogicalKeyboardKey.controlRight,
               ];
 
-              if (RawKeyboard.instance.keysPressed
+              final isControlPressed = RawKeyboard.instance.keysPressed
                   .where((it) => controlKeys.contains(it))
-                  .isNotEmpty) {
+                  .isNotEmpty;
+
+              if (isControlPressed) {
                 if (pointerSignal.scrollDelta.dy > 0) {
                   _incrementScale(-1);
                 } else if (pointerSignal.scrollDelta.dy < 0) {
                   _incrementScale(1);
+                }
+              } else {
+                if (pointerSignal.scrollDelta.dy > 0) {
+                  _rotateSelection(_paintConfig.rotationStep.toDouble());
+                } else if (pointerSignal.scrollDelta.dy < 0) {
+                  _rotateSelection(-_paintConfig.rotationStep.toDouble());
                 }
               }
             }
