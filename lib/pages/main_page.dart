@@ -630,6 +630,9 @@ class _MainPageState extends State<MainPage> {
             _selectionController.setSelectionData(null);
 
             break;
+          case StrokeMode.move:
+            // TODO: fix, move scale
+            break;
           case StrokeMode.start:
             final coordinates = (x, y);
 
@@ -756,6 +759,12 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  bool _isKeyPressed(List<LogicalKeyboardKey> controlKeys) {
+    return RawKeyboard.instance.keysPressed
+        .where((it) => controlKeys.contains(it))
+        .isNotEmpty;
+  }
+
   void _resetCurrentVector() {
     _selectionController.setSelectedNodes([]);
     _selectionController.setSelectionData(null);
@@ -798,7 +807,37 @@ class _MainPageState extends State<MainPage> {
 
       node.coordinates = (
         cosAngle * translatedX - sinAngle * translatedY + center.$1,
-        sinAngle * translatedX + cosAngle * translatedY + center.$2
+        sinAngle * translatedX + cosAngle * translatedY + center.$2,
+      );
+    }
+
+    _paintController.notify();
+  }
+
+  // TODO: fix, use
+  void _scaleSelection((double, double) factor) {
+    final xList = _selectionController.selectedNodes
+        .map((e) => e.coordinates.$1)
+        .toList();
+    final yList = _selectionController.selectedNodes
+        .map((e) => e.coordinates.$2)
+        .toList();
+
+    final xMin = Utils.min(xList);
+    final yMin = Utils.min(yList);
+
+    final xMax = Utils.max(xList);
+    final yMax = Utils.max(yList);
+
+    final center = (xMin + (xMax - xMin) / 2, yMin + (yMax - yMin) / 2);
+
+    for (var node in _selectionController.selectedNodes) {
+      final translatedX = node.coordinates.$1 - center.$1;
+      final translatedY = node.coordinates.$2 - center.$2;
+
+      node.coordinates = (
+        center.$1 + translatedX * factor.$1,
+        center.$2 + translatedY * factor.$2,
       );
     }
 
@@ -949,16 +988,10 @@ class _MainPageState extends State<MainPage> {
           behavior: HitTestBehavior.translucent,
           onPointerSignal: (pointerSignal) {
             if (pointerSignal is PointerScrollEvent) {
-              final controlKeys = [
+              if (_isKeyPressed([
                 LogicalKeyboardKey.controlLeft,
                 LogicalKeyboardKey.controlRight,
-              ];
-
-              final isControlPressed = RawKeyboard.instance.keysPressed
-                  .where((it) => controlKeys.contains(it))
-                  .isNotEmpty;
-
-              if (isControlPressed) {
+              ])) {
                 if (pointerSignal.scrollDelta.dy > 0) {
                   _incrementScale(-1);
                 } else if (pointerSignal.scrollDelta.dy < 0) {
@@ -971,6 +1004,12 @@ class _MainPageState extends State<MainPage> {
                   _rotateSelection(-_paintConfig.rotationStep.toDouble());
                 }
               }
+            } else if (pointerSignal is PointerMoveEvent) {
+              _handleTapEvent(
+                dx: pointerSignal.localPosition.dx,
+                dy: pointerSignal.localPosition.dy,
+                strokeMode: StrokeMode.move,
+              );
             }
           },
           child: Focus(
