@@ -14,3 +14,4 @@ void main() {
 // TODO: parametrize tooltip delay config
 // TODO: vector node deletion tool
 // TODO: delete vector selection
+// TODO: remove vector from vectors if theres only one node

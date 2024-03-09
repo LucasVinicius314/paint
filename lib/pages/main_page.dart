@@ -630,9 +630,6 @@ class _MainPageState extends State<MainPage> {
             _selectionController.setSelectionData(null);
 
             break;
-          case StrokeMode.move:
-            // TODO: fix, move scale
-            break;
           case StrokeMode.start:
             final coordinates = (x, y);
 
@@ -645,6 +642,8 @@ class _MainPageState extends State<MainPage> {
             );
 
             _lastStrokeCoordinates = (dx, dy);
+
+            _strokeStartCoordinates = (dx, dy);
 
             break;
           case StrokeMode.update:
@@ -668,9 +667,15 @@ class _MainPageState extends State<MainPage> {
               final ddy =
                   (dy - _lastStrokeCoordinates!.$2) / _paintConfig.canvasScale;
 
-              for (var node in _selectionController.selectedNodes) {
-                node.coordinates =
-                    (node.coordinates.$1 + ddx, node.coordinates.$2 + ddy);
+              if (_isKeyPressed([
+                LogicalKeyboardKey.shiftLeft,
+                LogicalKeyboardKey.shiftRight,
+              ])) {
+                if (_strokeStartCoordinates != null) {
+                  _scaleSelection((ddx, ddy));
+                }
+              } else {
+                _moveSelection((ddx, ddy));
               }
 
               _paintController.notify();
@@ -759,10 +764,19 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
-  bool _isKeyPressed(List<LogicalKeyboardKey> controlKeys) {
+  bool _isKeyPressed(List<LogicalKeyboardKey> targetKeys) {
     return RawKeyboard.instance.keysPressed
-        .where((it) => controlKeys.contains(it))
+        .where((it) => targetKeys.contains(it))
         .isNotEmpty;
+  }
+
+  void _moveSelection((double, double) offset) {
+    for (var node in _selectionController.selectedNodes) {
+      node.coordinates = (
+        node.coordinates.$1 + offset.$1,
+        node.coordinates.$2 + offset.$2,
+      );
+    }
   }
 
   void _resetCurrentVector() {
@@ -772,8 +786,6 @@ class _MainPageState extends State<MainPage> {
     if (_currentVector == null || _currentVector!.nodes.isEmpty) {
       return;
     }
-
-    // TODO: remove vector from vectors if theres only one node
 
     setState(() {
       _currentVector = null;
@@ -793,13 +805,7 @@ class _MainPageState extends State<MainPage> {
         .map((e) => e.coordinates.$2)
         .toList();
 
-    final xMin = Utils.min(xList);
-    final yMin = Utils.min(yList);
-
-    final xMax = Utils.max(xList);
-    final yMax = Utils.max(yList);
-
-    final center = (xMin + (xMax - xMin) / 2, yMin + (yMax - yMin) / 2);
+    final center = (Utils.avg(xList), Utils.avg(yList));
 
     for (var node in _selectionController.selectedNodes) {
       final translatedX = node.coordinates.$1 - center.$1;
@@ -814,7 +820,6 @@ class _MainPageState extends State<MainPage> {
     _paintController.notify();
   }
 
-  // TODO: fix, use
   void _scaleSelection((double, double) factor) {
     final xList = _selectionController.selectedNodes
         .map((e) => e.coordinates.$1)
@@ -836,8 +841,8 @@ class _MainPageState extends State<MainPage> {
       final translatedY = node.coordinates.$2 - center.$2;
 
       node.coordinates = (
-        center.$1 + translatedX * factor.$1,
-        center.$2 + translatedY * factor.$2,
+        center.$1 + translatedX * (factor.$1 / 100 + 1),
+        center.$2 + translatedY * (-factor.$2 / 100 + 1),
       );
     }
 
@@ -1004,12 +1009,6 @@ class _MainPageState extends State<MainPage> {
                   _rotateSelection(-_paintConfig.rotationStep.toDouble());
                 }
               }
-            } else if (pointerSignal is PointerMoveEvent) {
-              _handleTapEvent(
-                dx: pointerSignal.localPosition.dx,
-                dy: pointerSignal.localPosition.dy,
-                strokeMode: StrokeMode.move,
-              );
             }
           },
           child: Focus(

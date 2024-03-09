@@ -1,4 +1,18 @@
 class Utils {
+  static double avg(List<num> values) {
+    if (values.isEmpty) {
+      return 0;
+    }
+
+    var sum = 0.0;
+
+    for (var value in values) {
+      sum += value.toDouble();
+    }
+
+    return sum / values.length;
+  }
+
   static num clamp(num value, num min, num max) {
     if (value < min) {
       return min;
