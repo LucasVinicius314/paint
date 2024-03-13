@@ -1,5 +1,6 @@
 import 'package:paint/drawers/circle/base_circle_drawer.dart';
 
+// TODO: fix, add comments
 class BresenhamCircleDrawer implements BaseCircleDrawer {
   @override
   List<(int, int)> draw({
@@ -31,6 +32,7 @@ class BresenhamCircleDrawer implements BaseCircleDrawer {
     return out;
   }
 
+  /// Plot all equivalent coordinates.
   List<(int, int)> _plot({
     required (int, int) center,
     required int x,

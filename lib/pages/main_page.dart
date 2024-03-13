@@ -442,6 +442,7 @@ class _MainPageState extends State<MainPage> {
     required double dy,
     required StrokeMode strokeMode,
   }) {
+    // Define x and y as the scaled and offset coordinate that received the mouse event.
     final x = ((dx - Constants.canvasPadding) / _paintConfig.canvasScale);
     final y = ((dy - Constants.canvasPadding) / _paintConfig.canvasScale);
 
@@ -462,6 +463,7 @@ class _MainPageState extends State<MainPage> {
               return;
             }
 
+            // Define the circle's center as the scaled position of the first click.
             final center = (
               ((_strokeStartCoordinates!.$1.floor() - Constants.canvasPadding) /
                       _paintConfig.canvasScale)
@@ -500,19 +502,20 @@ class _MainPageState extends State<MainPage> {
               return;
             }
 
+            // Define the line's starting point coordinates as the scaled first click coordinates.
+            final start = (
+              ((_strokeStartCoordinates!.$1.floor() - Constants.canvasPadding) /
+                      _paintConfig.canvasScale)
+                  .floor(),
+              ((_strokeStartCoordinates!.$2.floor() - Constants.canvasPadding) /
+                      _paintConfig.canvasScale)
+                  .floor(),
+            );
+
             _drawLine(
               color: _paintConfig.paintToolColor,
               endCoordinates: (x.floor(), y.floor()),
-              startCoordinates: (
-                ((_strokeStartCoordinates!.$1.floor() -
-                            Constants.canvasPadding) /
-                        _paintConfig.canvasScale)
-                    .floor(),
-                ((_strokeStartCoordinates!.$2.floor() -
-                            Constants.canvasPadding) /
-                        _paintConfig.canvasScale)
-                    .floor(),
-              ),
+              startCoordinates: start,
             );
 
             _strokeStartCoordinates = null;
@@ -548,6 +551,7 @@ class _MainPageState extends State<MainPage> {
             final start = _selectionController.selectionData!.start;
             final end = (x.floor() + .5, y.floor() + .5);
 
+            // Define the clipping area limits as the bounding box's limits.
             final min = (
               (math.min(start.$1, end.$1) - .5).round(),
               (math.min(start.$2, end.$2) - .5).round(),
@@ -662,6 +666,7 @@ class _MainPageState extends State<MainPage> {
                 );
               }
             } else {
+              // Define ddx and xxy as the variation since the last event's coordinates.
               final ddx =
                   (dx - _lastStrokeCoordinates!.$1) / _paintConfig.canvasScale;
               final ddy =
@@ -805,6 +810,7 @@ class _MainPageState extends State<MainPage> {
         .map((e) => e.coordinates.$2)
         .toList();
 
+    // Define the rotation center as the average of all points.
     final center = (Utils.avg(xList), Utils.avg(yList));
 
     for (var node in _selectionController.selectedNodes) {
@@ -834,6 +840,7 @@ class _MainPageState extends State<MainPage> {
     final xMax = Utils.max(xList);
     final yMax = Utils.max(yList);
 
+    // Define the scaling center as the true center of the selection's bounding box.
     final center = (xMin + (xMax - xMin) / 2, yMin + (yMax - yMin) / 2);
 
     for (var node in _selectionController.selectedNodes) {

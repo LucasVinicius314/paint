@@ -17,18 +17,25 @@ class CohenSutherlandClipper implements BaseClipper {
     var ok = false;
 
     while (true) {
+      // Get the region code for both points.
       final c1 = _regionCode(x: x1, y: y1, max: max, min: min);
       final c2 = _regionCode(x: x2, y: y2, max: max, min: min);
 
+      // Don't clip the line because both points are inside the clipping area.
       if (c1 == 0 && c2 == 0) {
         ok = true;
         break;
+        // Clip line, since both points are inside the same sector.
       } else if ((c1 & c2) != 0) {
         break;
+        // Clip line.
       } else {
+        // Define which point needs to be clipped for being outside the clipping area.
         final cOut = c1 != 0 ? c1 : c2;
 
         var out = (0.0, 0.0);
+
+        // Adjust the point's position based on it's region code.
 
         if (_isBitSet(cOut, 0x1)) {
           out = (
@@ -52,6 +59,7 @@ class CohenSutherlandClipper implements BaseClipper {
           );
         }
 
+        // Update the correspondent point's coordinates.
         if (c1 == cOut) {
           x1 = out.$1;
           y1 = out.$2;
@@ -62,6 +70,7 @@ class CohenSutherlandClipper implements BaseClipper {
       }
     }
 
+    // Return the clipped line or nothing, if it was clipped completely.
     return ok ? ((x1.round(), y1.round()), (x2.round(), y2.round())) : null;
   }
 

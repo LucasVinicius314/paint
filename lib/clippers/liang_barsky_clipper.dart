@@ -1,5 +1,6 @@
 import 'package:paint/clippers/base_clipper.dart';
 
+// TODO: fix, add comments
 class LiangBarskyClipper implements BaseClipper {
   @override
   ((int, int), (int, int))? clip({

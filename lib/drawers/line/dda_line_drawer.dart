@@ -13,8 +13,10 @@ class DDALineDrawer implements BaseLineDrawer {
     final dx = end.$1 - start.$1;
     final dy = end.$2 - start.$2;
 
+    // Define how many steps are needed, taking the lenghtiest axis between x and y.
     final steps = math.max(dx.abs(), dy.abs());
 
+    // Define the step lenth on each axis.
     final xStep = dx / steps;
     final yStep = dy / steps;
 
@@ -23,6 +25,7 @@ class DDALineDrawer implements BaseLineDrawer {
 
     out.add((x.round(), y.round()));
 
+    // Iterate through all steps, adding the offset to each axis on every iteration.
     for (var i = 0; i < steps; i++) {
       x += xStep;
       y += yStep;

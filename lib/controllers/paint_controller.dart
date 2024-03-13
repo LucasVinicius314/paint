@@ -108,6 +108,7 @@ class PaintController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Replace the existing [Pixel] with [pixel], at given [coordinates].
   void _alterPixel({
     required (int, int) coordinates,
     required Pixel pixel,
