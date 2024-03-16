@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'package:paint/drawers/circle/bresenham_circle_drawer.dart';
-import 'package:paint/drawers/line/base_line_drawer.dart';
-import 'package:paint/drawers/line/bresenham_line_drawer.dart';
-import 'package:paint/drawers/line/dda_line_drawer.dart';
+import 'package:paint/core/drawers/circle/bresenham_circle_drawer.dart';
+import 'package:paint/core/drawers/line/base_line_drawer.dart';
+import 'package:paint/core/drawers/line/bresenham_line_drawer.dart';
+import 'package:paint/core/drawers/line/dda_line_drawer.dart';
 import 'package:paint/enums/line_drawing_mode.dart';
 import 'package:paint/model/paint_config.dart';
 import 'package:paint/model/paint_data.dart';

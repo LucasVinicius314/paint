@@ -26,7 +26,6 @@ COPY . .
 
 RUN flutter pub get
 
-# Build the Flutter application for the web
 RUN flutter build web --release
 
 FROM nginx:alpine AS runner

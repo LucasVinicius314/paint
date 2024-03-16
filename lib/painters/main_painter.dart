@@ -1,13 +1,13 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:paint/clippers/base_clipper.dart';
-import 'package:paint/clippers/cohen_sutherland_clipper.dart';
-import 'package:paint/clippers/liang_barsky_clipper.dart';
 import 'package:paint/controllers/paint_controller.dart';
-import 'package:paint/drawers/line/base_line_drawer.dart';
-import 'package:paint/drawers/line/bresenham_line_drawer.dart';
-import 'package:paint/drawers/line/dda_line_drawer.dart';
+import 'package:paint/core/clippers/base_clipper.dart';
+import 'package:paint/core/clippers/cohen_sutherland_clipper.dart';
+import 'package:paint/core/clippers/liang_barsky_clipper.dart';
+import 'package:paint/core/drawers/line/base_line_drawer.dart';
+import 'package:paint/core/drawers/line/bresenham_line_drawer.dart';
+import 'package:paint/core/drawers/line/dda_line_drawer.dart';
 import 'package:paint/enums/clipping_mode.dart';
 import 'package:paint/enums/line_drawing_mode.dart';
 import 'package:paint/enums/vector_polygon_mode.dart';

@@ -1,4 +1,4 @@
-import 'package:paint/clippers/base_clipper.dart';
+import 'package:paint/core/clippers/base_clipper.dart';
 
 class CohenSutherlandClipper implements BaseClipper {
   @override

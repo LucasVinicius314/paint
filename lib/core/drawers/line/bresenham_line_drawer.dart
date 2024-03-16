@@ -1,4 +1,4 @@
-import 'package:paint/drawers/line/base_line_drawer.dart';
+import 'package:paint/core/drawers/line/base_line_drawer.dart';
 
 // TODO: fix, add comments
 class BresenhamLineDrawer implements BaseLineDrawer {

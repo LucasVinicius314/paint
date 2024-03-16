@@ -22,18 +22,6 @@ jobs:
         run: flutter pub get
       - name: Build Windows
         run: flutter build windows
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: windows-app
-          path: build/windows/runner/Release/*.exe
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: windows-app
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -50,6 +38,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./windows-app/*.exe
-          asset_name: App.exe
-          asset_content_type: application/octet-stream
+          asset_path: build/windows/runner/Release/*
+          asset_name: paint.zip
+          asset_content_type: application/zip

@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:paint/drawers/line/base_line_drawer.dart';
+import 'package:paint/core/drawers/line/base_line_drawer.dart';
 
 class DDALineDrawer implements BaseLineDrawer {
   @override

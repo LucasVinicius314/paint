@@ -1,4 +1,4 @@
-import 'package:paint/drawers/circle/base_circle_drawer.dart';
+import 'package:paint/core/drawers/circle/base_circle_drawer.dart';
 
 class BresenhamCircleDrawer implements BaseCircleDrawer {
   @override
