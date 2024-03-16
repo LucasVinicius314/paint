@@ -1,6 +1,5 @@
 import 'package:paint/drawers/circle/base_circle_drawer.dart';
 
-// TODO: fix, add comments
 class BresenhamCircleDrawer implements BaseCircleDrawer {
   @override
   List<(int, int)> draw({
@@ -17,6 +16,7 @@ class BresenhamCircleDrawer implements BaseCircleDrawer {
     out.addAll(_plot(center: center, x: x, y: y));
 
     while (x < y) {
+      // Offset the p control variable and decrement positions accordingly.
       if (p < 0) {
         p += 4 * x + 6;
       } else {

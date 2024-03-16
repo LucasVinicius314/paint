@@ -7,7 +7,7 @@ import 'package:paint/enums/vector_polygon_mode.dart';
 
 class PaintConfig {
   var canvasDimensions = (0, 0);
-  var canvasScale = 1;
+  var canvasScale = 8;
 
   var clippingMode = ClippingMode.cohenSutherland;
 
