@@ -65,11 +65,11 @@ Vector tools:
 
 ### Running
 
-##### Web
+###### Web
 
  `flutter run web`
 
-##### Windows
+###### Windows
 
  `flutter run windows`
 
