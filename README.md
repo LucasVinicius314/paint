@@ -2,11 +2,13 @@
 
 A simple drawing application, made using [Flutter](https://flutter.dev/).
 
+[Deployed App](https://paint.suresure.me/)
+
 ![Application Demo](assets/demo/application.png)
 
-![Toolbar](assets/demo/toolbar.png)
-
 ![Settings](assets/demo/settings.png)
+
+![Toolbar](assets/demo/toolbar.png)
 
 ### About
 
@@ -49,13 +51,13 @@ Vector tools:
 
 ### Folder structure
 
-* `lib/` : Dart source code.
-* `lib/controllers` : Efficient data manipulation and propagation.
-* `lib/core` : Core functionality - drawers, clippers.
-* `lib/model` : Internal data structure definitions.
-* `lib/pages` : App pages.
-* `lib/painters` : Data views that reflect controller data and updates and overlays.
-* `lib/widgets` : Reusable and modular ui components and core ui elements.
+* [`lib/`](lib/) : Dart source code.
+* [`lib/controllers/`](lib/controllers/) : Efficient data manipulation and propagation.
+* [`lib/core/`](lib/core/) : Core functionality - drawers, clippers.
+* [`lib/model/`](lib/model/) : Internal data structure definitions.
+* [`lib/pages/`](lib/pages/) : App pages.
+* [`lib/painters/`](lib/painters/) : Data views that reflect controller data and updates and overlays.
+* [`lib/widgets/`](lib/widgets/) : Reusable and modular ui components and core ui elements.
 
 ### Installation
 
