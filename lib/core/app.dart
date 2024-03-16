@@ -23,3 +23,4 @@ class App extends StatelessWidget {
 }
 
 // TODO: app icon
+// TODO: github pages custom domain
