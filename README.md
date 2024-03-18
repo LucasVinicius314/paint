@@ -36,7 +36,7 @@ Vector node operations:
 * Translation (Select vector, LMB drag).
 
 Other features:
-* Clear canvas (Delete); 
+* Clear canvas (Ctrl + Delete); 
 * Select all nodes for vector selection tool (Ctrl + A); 
 * Zooming (Ctrl + +, Ctrl + -, Ctrl + 0); 
 
