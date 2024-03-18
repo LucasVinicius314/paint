@@ -1,6 +1,5 @@
 import 'package:paint/core/clippers/base_clipper.dart';
 
-// TODO: fix, add comments
 class LiangBarskyClipper implements BaseClipper {
   @override
   ((int, int), (int, int))? clip({
@@ -21,6 +20,8 @@ class LiangBarskyClipper implements BaseClipper {
     final dx = x2 - x1;
     final dy = y2 - y1;
 
+    /// Calculates intersections by adjusting u1 and u2 from the inside of the
+    /// clipping area, returning true if the intersection exists.
     bool clipTest({
       required double p,
       required double q,
@@ -48,6 +49,8 @@ class LiangBarskyClipper implements BaseClipper {
       return true;
     }
 
+    // Checks if the line intersects the area by looking at individual
+    // intersections using the rect's limits.
     final tests = [
       () => clipTest(p: -dx, q: x1 - min.$1),
       () => clipTest(p: dx, q: max.$1 - x1),
@@ -62,8 +65,8 @@ class LiangBarskyClipper implements BaseClipper {
       }
 
       if (u1 > 0) {
-        x1 = x1 + (u1 * dx);
-        y1 = y1 + (u1 * dy);
+        x1 += (u1 * dx);
+        y1 += (u1 * dy);
       }
 
       return ((x1.round(), y1.round()), (x2.round(), y2.round()));

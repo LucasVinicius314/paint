@@ -1,6 +1,5 @@
 import 'package:paint/core/drawers/line/base_line_drawer.dart';
 
-// TODO: fix, add comments
 class BresenhamLineDrawer implements BaseLineDrawer {
   @override
   List<(int, int)> draw({
@@ -43,16 +42,20 @@ class BresenhamLineDrawer implements BaseLineDrawer {
     final dx = x1 - x0;
     final dy = (y1 - y0).abs();
 
+    // Define if the slope in the y axis goes up or down.
     final yStep = (y0 < y1) ? 1 : -1;
 
     var error = dx ~/ 2;
 
     for (var x = x0, y = y0; x <= x1; x++) {
+      // Output inverted or normal pairs, based on the major axis.
       if (steep) {
         out.add((y, x));
       } else {
         out.add((x, y));
       }
+
+      // Accumulate the error until it reaches the 0 threshold.
 
       error -= dy;
 
