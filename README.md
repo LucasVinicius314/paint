@@ -4,6 +4,8 @@ A simple drawing application, made using [Flutter](https://flutter.dev/).
 
 Repository, on [GitHub](https://github.com/LucasVinicius314/paint).
 
+[Download Windows Releases](https://github.com/LucasVinicius314/paint/releases/tag/v0.0.8)
+
 [Deployed App](https://paint.suresure.me/)
 
 ![Application Demo](assets/demo/application.png)
