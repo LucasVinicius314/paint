@@ -2,6 +2,8 @@
 
 A simple drawing application, made using [Flutter](https://flutter.dev/).
 
+Repository, on [GitHub](https://github.com/LucasVinicius314/paint).
+
 [Deployed App](https://paint.suresure.me/)
 
 ![Application Demo](assets/demo/application.png)
